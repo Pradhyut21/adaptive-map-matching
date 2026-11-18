@@ -72,6 +72,9 @@ def main():
             mm.update(candidate_metrics(d['y'][candidates.valid],p[candidates.valid]))
             methods[name].append({'trip_id':path.stem,**mm})
             if name==tag:finalp=p
+        # Baseline/classifier continuity checks warmed routing caches. Reset
+        # before the timed decoder so its wall time reflects a cold trip router.
+        if hasattr(network,'_pathsnap_directed_router'):del network._pathsnap_directed_router
         begin=time.perf_counter()
         result=decode(network,candidates,finalp,d['track_xy'],d['timestamps'])
         inference=time.perf_counter()-begin

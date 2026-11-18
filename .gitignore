@@ -6,4 +6,5 @@ data/
 cache/
 *.log
 results/runtime/
+results/report_review/
 .pytest_cache/

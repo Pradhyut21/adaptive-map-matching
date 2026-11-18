@@ -54,3 +54,10 @@ Started 18 November 2026, approximately 10:30 IST. Target: 13:30 IST.
 - All8 optimization trials executed:3startup and5guidedTPE.
 - Best executed meanCVTop1=0.5952758852.
 - Final refit on all80trainingtrips in progress. Full ten-trip classifier/HMM comparison andliveHTTPchecks follow.
+
+## Stages 3A and 3B completed
+- All8TPE trials completed; all80trainingtrips refit with bestCV configuration; tuned anduntuned artifacts retained.
+- Tuned student-testTop1=0.7166492693 vsuntuned0.7060542797; tuned logloss slightly worse(0.209667 vs0.208061),reported.
+- All10student trips decoded withcustomHMM:Top1=0.7613256785,meantripTop1=0.7960259873,continuity=0.9986944488,sequenceLCSF1=0.7946221604.
+- All19160observations retained;25unreachable transitions remaincontinuity failures;1large timegap excludedandreported.
+- APIrunning on0.0.0.0:8000; UIservice on8800. All10liveHTTPrequests andbrowsercapture nowinprogress.

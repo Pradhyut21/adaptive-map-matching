@@ -93,8 +93,8 @@ def main() -> None:
             log_text = log_page.locator("body").inner_text()
             if metadata["trip_id"] not in log_text:
                 metadata["logs_note"] = "The read-only log page loaded; this view did not include the selected trip ID."
-            logs = args.output / "api_logs.png"
-            log_page.screenshot(path=str(logs), full_page=True)
+            logs = args.output / "server_logs_browser.png"
+            log_page.screenshot(path=str(logs), full_page=False)
             metadata["screenshots"].append(str(logs))
             metadata["log_image_scope"] = "Screenshot of actual server log text in the browser; not a terminal screenshot."
         else:

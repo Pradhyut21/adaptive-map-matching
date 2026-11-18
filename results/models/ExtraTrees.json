@@ -148,7 +148,15 @@
       "00000077": 0.4129378675530555,
       "00000091": 0.6910755148741419
     },
-    "mean_trip_top1_accuracy": 0.7383198252508173
+    "mean_trip_top1_accuracy": 0.7383198252508173,
+    "trips": 10,
+    "route_continuity": 0.9205180427176354,
+    "eligible_transitions": 19149,
+    "feasible_transitions": 17627,
+    "unreachable_transitions": 1522,
+    "excluded_time_gaps": 1,
+    "sequence_lcs_f1": 0.46486928104575165,
+    "mean_trip_sequence_lcs_f1": 0.5405026932878071
   },
   "student_trips": [
     {
@@ -159,10 +167,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 94,
       "candidate_miss_rate": 0.037554934079105075,
-      "sequence_lcs": 175,
-      "sequence_lcs_f1": 0.6542056074766355,
-      "predicted_sequence_length": 356,
-      "reference_sequence_length": 179
+      "route_continuity": 0.964828137490008,
+      "continuity": 0.964828137490008,
+      "feasible_transitions": 2414,
+      "eligible_transitions": 2502,
+      "missing_transitions": 0,
+      "unreachable_transitions": 88,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 88,
+      "coverage": 1.0,
+      "sequence_lcs": 179,
+      "sequence_lcs_f1": 0.5063649222065064,
+      "predicted_sequence_length": 528,
+      "reference_sequence_length": 179,
+      "candidate_count": 16866,
+      "macro_f1": 0.9165504618912719,
+      "precision": 0.8863517548049562,
+      "recall": 0.9561413754931423,
+      "log_loss": 0.12197790312268551,
+      "confusion_matrix": [
+        [
+          13807,
+          650
+        ],
+        [
+          103,
+          2306
+        ]
+      ]
     },
     {
       "trip_id": "00000007",
@@ -172,10 +205,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 0,
       "candidate_miss_rate": 0.0,
-      "sequence_lcs": 121,
-      "sequence_lcs_f1": 0.657608695652174,
-      "predicted_sequence_length": 245,
-      "reference_sequence_length": 123
+      "route_continuity": 0.9209164818920916,
+      "continuity": 0.9209164818920916,
+      "feasible_transitions": 1246,
+      "eligible_transitions": 1353,
+      "missing_transitions": 0,
+      "unreachable_transitions": 107,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 107,
+      "coverage": 1.0,
+      "sequence_lcs": 122,
+      "sequence_lcs_f1": 0.6524064171122995,
+      "predicted_sequence_length": 251,
+      "reference_sequence_length": 123,
+      "candidate_count": 10910,
+      "macro_f1": 0.9072798111916419,
+      "precision": 0.8742367051410874,
+      "recall": 0.9511164229453928,
+      "log_loss": 0.14433209868613336,
+      "confusion_matrix": [
+        [
+          9144,
+          412
+        ],
+        [
+          74,
+          1280
+        ]
+      ]
     },
     {
       "trip_id": "00000009",
@@ -185,10 +243,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 34,
       "candidate_miss_rate": 0.032411820781696854,
-      "sequence_lcs": 359,
-      "sequence_lcs_f1": 0.789010989010989,
-      "predicted_sequence_length": 481,
-      "reference_sequence_length": 429
+      "route_continuity": 0.9723282442748091,
+      "continuity": 0.9723282442748091,
+      "feasible_transitions": 1019,
+      "eligible_transitions": 1048,
+      "missing_transitions": 0,
+      "unreachable_transitions": 29,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 29,
+      "coverage": 1.0,
+      "sequence_lcs": 421,
+      "sequence_lcs_f1": 0.6746794871794872,
+      "predicted_sequence_length": 819,
+      "reference_sequence_length": 429,
+      "candidate_count": 10490,
+      "macro_f1": 0.7878633708554009,
+      "precision": 0.7382474278600577,
+      "recall": 0.9038267673551088,
+      "log_loss": 0.22192537918899724,
+      "confusion_matrix": [
+        [
+          8502,
+          973
+        ],
+        [
+          91,
+          924
+        ]
+      ]
     },
     {
       "trip_id": "00000040",
@@ -198,10 +281,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 66,
       "candidate_miss_rate": 0.022036727879799666,
-      "sequence_lcs": 294,
-      "sequence_lcs_f1": 0.572541382667965,
-      "predicted_sequence_length": 718,
-      "reference_sequence_length": 309
+      "route_continuity": 0.9338677354709419,
+      "continuity": 0.9338677354709419,
+      "feasible_transitions": 2796,
+      "eligible_transitions": 2994,
+      "missing_transitions": 0,
+      "unreachable_transitions": 198,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 198,
+      "coverage": 1.0,
+      "sequence_lcs": 305,
+      "sequence_lcs_f1": 0.46387832699619774,
+      "predicted_sequence_length": 1006,
+      "reference_sequence_length": 309,
+      "candidate_count": 24212,
+      "macro_f1": 0.8565267789542585,
+      "precision": 0.8234406666629335,
+      "recall": 0.903052744456114,
+      "log_loss": 0.16587158966706214,
+      "confusion_matrix": [
+        [
+          20012,
+          1271
+        ],
+        [
+          393,
+          2536
+        ]
+      ]
     },
     {
       "trip_id": "00000052",
@@ -211,10 +319,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 0,
       "candidate_miss_rate": 0.0,
-      "sequence_lcs": 81,
-      "sequence_lcs_f1": 0.8804347826086957,
-      "predicted_sequence_length": 89,
-      "reference_sequence_length": 95
+      "route_continuity": 0.9616858237547893,
+      "continuity": 0.9616858237547893,
+      "feasible_transitions": 251,
+      "eligible_transitions": 261,
+      "missing_transitions": 0,
+      "unreachable_transitions": 10,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 10,
+      "coverage": 1.0,
+      "sequence_lcs": 91,
+      "sequence_lcs_f1": 0.914572864321608,
+      "predicted_sequence_length": 104,
+      "reference_sequence_length": 95,
+      "candidate_count": 2620,
+      "macro_f1": 0.9144374230879422,
+      "precision": 0.8839689917369902,
+      "recall": 0.9525021204410518,
+      "log_loss": 0.11236641227311761,
+      "confusion_matrix": [
+        [
+          2287,
+          71
+        ],
+        [
+          17,
+          245
+        ]
+      ]
     },
     {
       "trip_id": "00000056",
@@ -224,10 +357,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 77,
       "candidate_miss_rate": 0.019454269833249115,
-      "sequence_lcs": 1121,
-      "sequence_lcs_f1": 0.7483311081441922,
-      "predicted_sequence_length": 1673,
-      "reference_sequence_length": 1323
+      "route_continuity": 0.9034622188526662,
+      "continuity": 0.9034622188526662,
+      "feasible_transitions": 3575,
+      "eligible_transitions": 3957,
+      "missing_transitions": 0,
+      "unreachable_transitions": 382,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 382,
+      "coverage": 1.0,
+      "sequence_lcs": 1279,
+      "sequence_lcs_f1": 0.6815880628830269,
+      "predicted_sequence_length": 2430,
+      "reference_sequence_length": 1323,
+      "candidate_count": 39404,
+      "macro_f1": 0.8189453833835935,
+      "precision": 0.7735640931379522,
+      "recall": 0.8986237984538514,
+      "log_loss": 0.19268452852154164,
+      "confusion_matrix": [
+        [
+          32888,
+          2635
+        ],
+        [
+          499,
+          3382
+        ]
+      ]
     },
     {
       "trip_id": "00000065",
@@ -237,10 +395,37 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 53,
       "candidate_miss_rate": 0.06901041666666667,
-      "sequence_lcs": 129,
-      "sequence_lcs_f1": 0.5695364238410596,
-      "predicted_sequence_length": 308,
-      "reference_sequence_length": 145
+      "route_continuity": 0.8733681462140992,
+      "continuity": 0.8733681462140992,
+      "feasible_transitions": 669,
+      "eligible_transitions": 766,
+      "missing_transitions": 0,
+      "unreachable_transitions": 97,
+      "excluded_time_gaps": 1,
+      "excluded_reasons": {
+        "large_gps_gap": 1
+      },
+      "restart_count": 98,
+      "coverage": 1.0,
+      "sequence_lcs": 144,
+      "sequence_lcs_f1": 0.4578696343402226,
+      "predicted_sequence_length": 484,
+      "reference_sequence_length": 145,
+      "candidate_count": 7680,
+      "macro_f1": 0.7684169124877089,
+      "precision": 0.7312871432414586,
+      "recall": 0.8323294795656605,
+      "log_loss": 0.2303274816831163,
+      "confusion_matrix": [
+        [
+          6412,
+          553
+        ],
+        [
+          183,
+          532
+        ]
+      ]
     },
     {
       "trip_id": "00000076",
@@ -250,10 +435,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 13,
       "candidate_miss_rate": 0.008748317631224764,
-      "sequence_lcs": 335,
-      "sequence_lcs_f1": 0.7188841201716738,
-      "predicted_sequence_length": 558,
-      "reference_sequence_length": 374
+      "route_continuity": 0.9468013468013468,
+      "continuity": 0.9468013468013468,
+      "feasible_transitions": 1406,
+      "eligible_transitions": 1485,
+      "missing_transitions": 0,
+      "unreachable_transitions": 79,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 79,
+      "coverage": 1.0,
+      "sequence_lcs": 374,
+      "sequence_lcs_f1": 0.5183645183645184,
+      "predicted_sequence_length": 1069,
+      "reference_sequence_length": 374,
+      "candidate_count": 14860,
+      "macro_f1": 0.8010417596689536,
+      "precision": 0.7551688518203938,
+      "recall": 0.8890438743730619,
+      "log_loss": 0.1998665480438761,
+      "confusion_matrix": [
+        [
+          12243,
+          1144
+        ],
+        [
+          201,
+          1272
+        ]
+      ]
     },
     {
       "trip_id": "00000077",
@@ -263,10 +473,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 511,
       "candidate_miss_rate": 0.13065712094093582,
-      "sequence_lcs": 261,
-      "sequence_lcs_f1": 0.23087129588677577,
-      "predicted_sequence_length": 1993,
-      "reference_sequence_length": 268
+      "route_continuity": 0.881074168797954,
+      "continuity": 0.881074168797954,
+      "feasible_transitions": 3445,
+      "eligible_transitions": 3910,
+      "missing_transitions": 0,
+      "unreachable_transitions": 465,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 465,
+      "coverage": 1.0,
+      "sequence_lcs": 268,
+      "sequence_lcs_f1": 0.13907628437986508,
+      "predicted_sequence_length": 3586,
+      "reference_sequence_length": 268,
+      "candidate_count": 39110,
+      "macro_f1": 0.6767932026124914,
+      "precision": 0.6507603695169237,
+      "recall": 0.7278921294084701,
+      "log_loss": 0.3041909249242261,
+      "confusion_matrix": [
+        [
+          32146,
+          3564
+        ],
+        [
+          1511,
+          1889
+        ]
+      ]
     },
     {
       "trip_id": "00000091",
@@ -276,10 +511,35 @@
       "prediction_coverage": 1.0,
       "candidate_miss_count": 42,
       "candidate_miss_rate": 0.04805491990846682,
-      "sequence_lcs": 177,
-      "sequence_lcs_f1": 0.5870646766169154,
-      "predicted_sequence_length": 371,
-      "reference_sequence_length": 232
+      "route_continuity": 0.9232531500572738,
+      "continuity": 0.9232531500572738,
+      "feasible_transitions": 806,
+      "eligible_transitions": 873,
+      "missing_transitions": 0,
+      "unreachable_transitions": 67,
+      "excluded_time_gaps": 0,
+      "excluded_reasons": {},
+      "restart_count": 67,
+      "coverage": 1.0,
+      "sequence_lcs": 231,
+      "sequence_lcs_f1": 0.39622641509433965,
+      "predicted_sequence_length": 934,
+      "reference_sequence_length": 232,
+      "candidate_count": 8656,
+      "macro_f1": 0.7960475133273016,
+      "precision": 0.752379500151452,
+      "recall": 0.8756685543495359,
+      "log_loss": 0.21625876078637446,
+      "confusion_matrix": [
+        [
+          7195,
+          629
+        ],
+        [
+          140,
+          692
+        ]
+      ]
     }
   ],
   "training_seconds": 127.66558780000014,

@@ -1,0 +1,19 @@
+{
+  "model_name": "ExtraTrees",
+  "tag": "ExtraTrees_tuned",
+  "feature_version": "trace-lite-v2",
+  "decoder": {
+    "beta": 30.0,
+    "max_speed": 55.0,
+    "gap_seconds": 60.0,
+    "min_route_m": 200.0,
+    "max_route_m": 5000.0,
+    "route_slack_m": 100.0,
+    "displacement_multiplier": 3.0,
+    "speed_penalty_weight": 2.0,
+    "cache_max": 512,
+    "distance_bucket_m": 250.0,
+    "probability_floor": 1e-08
+  },
+  "selected_by": "grouped-CV Top-1"
+}
