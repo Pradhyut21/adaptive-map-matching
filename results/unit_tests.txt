@@ -1,0 +1,64 @@
+Test runner output. Local machine paths abbreviated.
+
+<python-user-packages>\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_actual_trained_inference_has_one_prediction_per_observation_and_no_reference_labels (test_api.ApiTests.test_actual_trained_inference_has_one_prediction_per_observation_and_no_reference_labels) ... 2026-11-18 11:20:44,494 INFO pathsnap.api run=2a15cbf0c021 POST /predict trip=00000000 partition=student_test BEGIN
+2026-11-18 11:20:47,048 INFO pathsnap.api run=2a15cbf0c021 POST /predict trip=00000000 status=200 points=2503 inference=1.445s accuracy=0.8913304035157811 warnings=7
+ok
+test_health_reports_readiness_without_requiring_trained_artifact (test_api.ApiTests.test_health_reports_readiness_without_requiring_trained_artifact) ... ok
+test_missing_or_invalid_trip_ids_are_rejected_before_inference (test_api.ApiTests.test_missing_or_invalid_trip_ids_are_rejected_before_inference) ... ok
+test_prediction_failure_does_not_invoke_reference_evaluation (test_api.ApiTests.test_prediction_failure_does_not_invoke_reference_evaluation) ... 2026-11-18 11:20:48,034 INFO pathsnap.api run=7cdbf842d298 POST /predict trip=00000000 partition=student_test BEGIN
+2026-11-18 11:20:48,034 ERROR pathsnap.api run=7cdbf842d298 trip=00000000 failed
+Traceback (most recent call last):
+  File "<project-root>\backend\main.py", line 99, in predict
+    prediction=predict_trip(available[request.trip_id],MODEL)
+  File "<python-installation>\Lib\unittest\mock.py", line 1169, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python-installation>\Lib\unittest\mock.py", line 1173, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python-installation>\Lib\unittest\mock.py", line 1228, in _execute_mock_call
+    raise effect
+RuntimeError: Deliberate test failure
+ok
+test_separate_laptop_origin_can_send_prediction_json (test_api.ApiTests.test_separate_laptop_origin_can_send_prediction_json) ... ok
+test_trip_discovery_exposes_identifiers_and_counts_only (test_api.ApiTests.test_trip_discovery_exposes_identifiers_and_counts_only) ... ok
+test_unavailable_model_is_explicit_503_and_health_is_informative (test_api.ApiTests.test_unavailable_model_is_explicit_503_and_health_is_informative) ... ok
+test_unknown_trip_is_not_found_even_if_model_missing (test_api.ApiTests.test_unknown_trip_is_not_found_even_if_model_missing) ... ok
+test_continuity_counts_missing_and_unreachable (test_decoder.DecoderTests.test_continuity_counts_missing_and_unreachable) ... ok
+test_continuity_excludes_only_exogenous_time_gap (test_decoder.DecoderTests.test_continuity_excludes_only_exogenous_time_gap) ... ok
+test_disconnected_transition_is_explicit (test_decoder.DecoderTests.test_disconnected_transition_is_explicit) ... ok
+test_duplicate_timestamp_breaks_without_dividing_by_zero (test_decoder.DecoderTests.test_duplicate_timestamp_breaks_without_dividing_by_zero) ... ok
+test_gap_starts_new_segment (test_decoder.DecoderTests.test_gap_starts_new_segment) ... ok
+test_graph_id_collision_does_not_share_router (test_decoder.DecoderTests.test_graph_id_collision_does_not_share_router) ... ok
+test_invalid_gps_retains_missing_marker (test_decoder.DecoderTests.test_invalid_gps_retains_missing_marker) ... ok
+test_missing_row_retains_observation_alignment (test_decoder.DecoderTests.test_missing_row_retains_observation_alignment) ... ok
+test_probability_nan_zero_and_infinity_are_safe (test_decoder.DecoderTests.test_probability_nan_zero_and_infinity_are_safe) ... ok
+test_reconstructs_unobserved_intermediate_arc (test_decoder.DecoderTests.test_reconstructs_unobserved_intermediate_arc) ... ok
+test_single_observation_and_all_missing (test_decoder.DecoderTests.test_single_observation_and_all_missing) ... ok
+test_viterbi_uses_reachable_alternative_over_local_winner (test_decoder.DecoderTests.test_viterbi_uses_reachable_alternative_over_local_winner) ... ok
+test_cache_shared_for_multiple_destination_candidates (test_decoder.DirectedRouterTests.test_cache_shared_for_multiple_destination_candidates) ... ok
+test_cache_stays_bounded (test_decoder.DirectedRouterTests.test_cache_stays_bounded) ... ok
+test_distance_bucket_does_not_relax_requested_bound (test_decoder.DirectedRouterTests.test_distance_bucket_does_not_relax_requested_bound) ... ok
+test_forward_same_arc_and_unreachable_reverse (test_decoder.DirectedRouterTests.test_forward_same_arc_and_unreachable_reverse) ... ok
+test_intermediate_arcs_and_projected_distance (test_decoder.DirectedRouterTests.test_intermediate_arcs_and_projected_distance) ... ok
+test_same_arc_backwards_requires_real_directed_loop (test_decoder.DirectedRouterTests.test_same_arc_backwards_requires_real_directed_loop) ... ok
+test_zero_length_arc (test_decoder.DirectedRouterTests.test_zero_length_arc) ... ok
+test_exact_projection_clamps_endpoints_and_handles_degenerate_segment (test_pipeline.GeometryTests.test_exact_projection_clamps_endpoints_and_handles_degenerate_segment) ... ok
+test_far_observation_stays_missing_and_features_are_finite (test_pipeline.GeometryTests.test_far_observation_stays_missing_and_features_are_finite) ... ok
+test_projection_round_trip_and_reference_free_candidates (test_pipeline.GeometryTests.test_projection_round_trip_and_reference_free_candidates) ... ok
+test_grouped_folds_keep_all_trip_candidates_together (test_pipeline.GroupIsolationTests.test_grouped_folds_keep_all_trip_candidates_together) ... ok
+test_training_sampling_is_subset_and_retains_positives_and_hard_negatives (test_pipeline.GroupIsolationTests.test_training_sampling_is_subset_and_retains_positives_and_hard_negatives) ... ok
+test_exact_lcs_matches_classical_dynamic_programming (test_pipeline.MetricTests.test_exact_lcs_matches_classical_dynamic_programming) ... ok
+test_missing_candidate_remains_top1_failure (test_pipeline.MetricTests.test_missing_candidate_remains_top1_failure) ... ok
+test_packed_scoring_keeps_observation_without_any_candidate (test_pipeline.MetricTests.test_packed_scoring_keeps_observation_without_any_candidate) ... ok
+test_alignment_handles_single_observation_and_long_gap (test_pipeline.ReferenceAlignmentTests.test_alignment_handles_single_observation_and_long_gap) ... ok
+test_failed_monotone_alignment_uses_logged_exact_nearest_fallback (test_pipeline.ReferenceAlignmentTests.test_failed_monotone_alignment_uses_logged_exact_nearest_fallback) ... ok
+test_heading_does_not_use_observations_across_large_gap (test_pipeline.ReferenceAlignmentTests.test_heading_does_not_use_observations_across_large_gap) ... ok
+test_repeated_arc_occurrences_keep_ordered_position_identity (test_pipeline.ReferenceAlignmentTests.test_repeated_arc_occurrences_keep_ordered_position_identity) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 4.898s
+
+OK

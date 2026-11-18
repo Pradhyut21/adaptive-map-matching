@@ -1,0 +1,21 @@
+GaussianNB fold0: Top1=0.41740, F1=0.65531, fit=0.9s, predict=0.7s
+GaussianNB fold1: Top1=0.65103, F1=0.67686, fit=0.7s, predict=0.7s
+GaussianNB fold2: Top1=0.61569, F1=0.66838, fit=0.6s, predict=0.5s
+SAVED GaussianNB
+LogisticRegression fold0: Top1=0.35928, F1=0.70425, fit=2.1s, predict=0.4s
+LogisticRegression fold1: Top1=0.48097, F1=0.69432, fit=1.4s, predict=0.2s
+LogisticRegression fold2: Top1=0.48707, F1=0.70024, fit=1.2s, predict=0.3s
+SAVED LogisticRegression
+DecisionTree fold0: Top1=0.42257, F1=0.65419, fit=11.3s, predict=0.1s
+DecisionTree fold1: Top1=0.60853, F1=0.75470, fit=9.9s, predict=0.2s
+DecisionTree fold2: Top1=0.60206, F1=0.74429, fit=12.2s, predict=0.1s
+SAVED DecisionTree
+ExtraTrees fold0: Top1=0.46631, F1=0.71790, fit=58.2s, predict=2.9s
+ExtraTrees fold1: Top1=0.65275, F1=0.78819, fit=65.7s, predict=4.1s
+ExtraTrees fold2: Top1=0.64608, F1=0.78582, fit=65.7s, predict=2.8s
+SAVED ExtraTrees
+HistGradientBoosting fold0: Top1=0.43572, F1=0.69375, fit=6.6s, predict=4.9s
+HistGradientBoosting fold1: Top1=0.65443, F1=0.78011, fit=6.3s, predict=5.0s
+HistGradientBoosting fold2: Top1=0.64211, F1=0.77670, fit=7.1s, predict=4.6s
+SAVED HistGradientBoosting
+SELECTED ExtraTrees

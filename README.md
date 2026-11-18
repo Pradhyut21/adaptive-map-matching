@@ -4,7 +4,27 @@ Independent, CPU-based noisy GPS map matching: learned candidate scoring, direct
 
 This repository was implemented with AI assistance. Every team member must review the code, reproduce the measurements, interpret the recorded results independently, and make the required disclosure. This README is implementation documentation, not evidence that the team has completed its viva or two-device demonstration.
 
-## Setup (Python 3.11+; executed here on Python 3.13)
+## Executed results
+
+Measured across all ten student-testing trips (19,160 observations), using approximate reference-aligned point labels:
+
+| Method | Observation Top-1 | Directed continuity | Ordered-sequence LCS F1 |
+|---|---:|---:|---:|
+| Nearest road | 42.96% | 75.58% | 0.2984 |
+| Tuned Extra Trees | 71.66% | 92.57% | 0.4765 |
+| Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 |
+
+HMM improved pointwise accuracy on eight trips and reduced it on two. All points remain in the accuracy denominator; the continuity result retains 25 unreachable transitions as failures and excludes one explicitly reported time gap. Candidate miss rate is 4.65% on these student trips. These are project diagnostics, not scores on the reserved evaluator partition.
+
+The five-algorithm comparison used all 80 training trips and three grouped folds. Eight TPE trials (three startup, five guided) improved selected-model mean CV Top-1 from 58.84% to 59.53%. Student-test Top-1 improved from 70.61% to 71.66%, while binary log loss worsened slightly from 0.2081 to 0.2097. Both results are retained.
+
+With the two heading reliability features, the selected classifier scored 59.53% mean grouped-CV Top-1 and 71.66% student-test Top-1. Removing them gave 57.19% and 68.25%, respectively. The reference-label alignment also uses heading. Run `python -m scripts.ablation` after tuning to reproduce this comparison.
+
+All ten genuine live HTTP requests passed and matched offline Top-1 exactly. Observed full inference times were 0.32–7.82 seconds, excluding the separate reference evaluation. All 39 behavior/API tests passed. Desktop and mobile browser captures had no JavaScript errors or horizontal overflow. See `results/api_integration.json`, `results/unit_tests.txt`, and `results/screenshots/capture_metadata.json`. The physical two-laptop demonstration and receiving-terminal screenshot are pending; the user will perform that check later.
+
+## Setup
+
+Use Python 3.12 or 3.13 for the pinned dependencies. The saved models and results were produced with Python 3.13.
 
 ```powershell
 python -m venv .venv
@@ -30,6 +50,7 @@ python -m scripts.train --smoke
 python -m scripts.train
 python -m scripts.tune --trials 8
 python -m scripts.evaluate
+python -m scripts.eda --map-only
 python -m unittest discover -s tests -v
 ```
 

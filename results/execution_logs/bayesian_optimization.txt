@@ -1,0 +1,35 @@
+[I 2026-11-18 10:52:06,567] A new study created in RDB with name: pathsnap-ExtraTrees-grouped-top1
+ExtraTrees fold0: Top1=0.46900, F1=0.72988, fit=49.8s, predict=4.7s
+ExtraTrees fold1: Top1=0.66196, F1=0.79423, fit=57.6s, predict=7.5s
+ExtraTrees fold2: Top1=0.65487, F1=0.79543, fit=59.6s, predict=3.4s
+First trial 187.3s; estimated 8 trials 25.0 minutes
+[I 2026-11-18 10:55:14,074] Trial 0 finished with value: 0.595275885169715 and parameters: {'n_estimators': 88, 'max_depth': 17, 'min_samples_leaf': 5, 'max_features': 0.5504086608453373}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.45916, F1=0.71984, fit=72.6s, predict=2.4s
+ExtraTrees fold1: Top1=0.66515, F1=0.79892, fit=62.8s, predict=2.4s
+ExtraTrees fold2: Top1=0.65522, F1=0.79897, fit=58.9s, predict=2.2s
+[I 2026-11-18 10:58:39,006] Trial 1 finished with value: 0.5931764771517418 and parameters: {'n_estimators': 96, 'max_depth': 12, 'min_samples_leaf': 3, 'max_features': 0.8216255316280985}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.45931, F1=0.71915, fit=24.1s, predict=1.2s
+ExtraTrees fold1: Top1=0.66061, F1=0.79133, fit=33.2s, predict=2.6s
+ExtraTrees fold2: Top1=0.65089, F1=0.79235, fit=103.6s, predict=1.9s
+[I 2026-11-18 11:01:30,812] Trial 2 finished with value: 0.5902701261653549 and parameters: {'n_estimators': 40, 'max_depth': 15, 'min_samples_leaf': 18, 'max_features': 0.7688960491023844}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.45721, F1=0.72056, fit=49.3s, predict=3.3s
+ExtraTrees fold1: Top1=0.65774, F1=0.79322, fit=41.0s, predict=5.9s
+ExtraTrees fold2: Top1=0.65018, F1=0.79267, fit=52.2s, predict=4.1s
+[I 2026-11-18 11:04:11,992] Trial 3 finished with value: 0.5883759994924637 and parameters: {'n_estimators': 80, 'max_depth': 22, 'min_samples_leaf': 13, 'max_features': 0.503208164137119}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.45297, F1=0.71044, fit=31.0s, predict=1.6s
+ExtraTrees fold1: Top1=0.66310, F1=0.79437, fit=33.3s, predict=1.6s
+ExtraTrees fold2: Top1=0.65609, F1=0.79533, fit=35.9s, predict=1.8s
+[I 2026-11-18 11:06:02,020] Trial 4 finished with value: 0.5907207113365452 and parameters: {'n_estimators': 48, 'max_depth': 13, 'min_samples_leaf': 3, 'max_features': 0.81695728938362}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.46637, F1=0.72901, fit=104.4s, predict=11.8s
+ExtraTrees fold1: Top1=0.64644, F1=0.78527, fit=109.0s, predict=5.7s
+ExtraTrees fold2: Top1=0.64119, F1=0.78681, fit=79.0s, predict=5.5s
+[I 2026-11-18 11:11:24,574] Trial 5 finished with value: 0.584665870794395 and parameters: {'n_estimators': 96, 'max_depth': 20, 'min_samples_leaf': 3, 'max_features': 0.8989587390127323}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.46088, F1=0.72813, fit=53.6s, predict=2.7s
+ExtraTrees fold1: Top1=0.66557, F1=0.79776, fit=47.1s, predict=2.4s
+ExtraTrees fold2: Top1=0.65566, F1=0.79726, fit=49.4s, predict=2.5s
+[I 2026-11-18 11:14:06,890] Trial 6 finished with value: 0.5940370957223461 and parameters: {'n_estimators': 88, 'max_depth': 14, 'min_samples_leaf': 8, 'max_features': 0.5909322425565906}. Best is trial 0 with value: 0.595275885169715.
+ExtraTrees fold0: Top1=0.46004, F1=0.72607, fit=23.3s, predict=1.3s
+ExtraTrees fold1: Top1=0.66196, F1=0.79386, fit=21.1s, predict=1.3s
+ExtraTrees fold2: Top1=0.65356, F1=0.79448, fit=23.8s, predict=1.3s
+[I 2026-11-18 11:15:22,995] Trial 7 finished with value: 0.591851781772811 and parameters: {'n_estimators': 40, 'max_depth': 15, 'min_samples_leaf': 5, 'max_features': 0.5828130959750636}. Best is trial 0 with value: 0.595275885169715.
+FINAL MODEL ExtraTrees_tuned

@@ -1,0 +1,6 @@
+# Preserve byte offsets and serialized artifacts across operating systems.
+*.pdf binary
+*.joblib binary
+*.npz binary
+*.png binary
+*.sqlite3 binary

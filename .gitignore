@@ -7,4 +7,5 @@ cache/
 *.log
 results/runtime/
 results/report_review/
+artifacts/*_without_motion_reliability.joblib
 .pytest_cache/

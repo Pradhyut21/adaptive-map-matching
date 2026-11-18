@@ -1,63 +1,39 @@
 # PathSnap execution status
 
-Started 18 November 2026, approximately 10:30 IST. Target: 13:30 IST.
+The implementation and local verification are complete. The physical two-laptop demonstration and receiving-terminal screenshot are pending. The team will run those checks later.
 
-## Completed
-- Read the five official guideline PDFs and inspected the problem video.
-- Downloaded permitted Student folder.zip; verified 80 training and 10 student-testing trips.
-- Created isolated Git repository on codex/pathsnap-trace-lite. Authorized remote: Pradhyut21/adaptive-map-matching (empty public repository verified).
+## Data and features
 
-## Active
-- Stage 1: extraction, geometry, spatial candidates, EDA and nearest-road baseline.
-- Stage 2: derived reference label alignment, feature cache, five-model grouped comparison.
+- Validated all 80 training trips (208,417 observations) and 10 student-test trips (19,160 observations). The EDA inventory includes file hashes, missing-value checks, graph connectivity, timestamp gaps and reference-route checks. See `results/eda/`.
+- Derived approximate pointwise labels from the reference route using monotone alignment. Logged ambiguous, poor-fit and nearest-reference fallback cases in `results/feature_inventory.json`.
+- Used up to ten candidates with a 250 m search radius. A training-trip comparison supported the change from 100 m. The resulting candidate miss rates are 12.03% on training and 4.65% on student testing. Misses remain in the Top-1 denominator. See `results/candidate_radius_experiment.json`.
 
-## Remaining
-- Bayesian optimization; custom decoder; actual ten-trip comparisons.
-- FastAPI, UI, integration logs, Folium and measured graphs, consolidated PDF.
-- Local stage commits and publish to authorized repository.
+## Training and Bayesian optimization
 
-## Constraints and pending evidence
-- No evaluator data is available or used.
-- Pointwise labels will be derived from ordered routes and must be described as approximate.
-- Actual second-laptop LAN demonstration requires the team's second device and remains pending.
-- AI implementation assistance must be disclosed; team review and independent interpretation remain required.
-- No experiments have been claimed before execution.
+- Completed three-fold trip-grouped cross-validation and full student-test scoring for all five classifiers. Saved the models, fold membership, confusion matrices, timings and 50 student-trip prediction files. See `results/model_comparison.csv`, `results/cv/` and `results/execution_manifest.json`.
+- Selected Extra Trees by mean grouped-CV Top-1. Ran all eight Optuna trials with three startup proposals followed by five guided TPE proposals. The best objective came from the first startup trial. Refit that configuration on all 80 training trips. See `results/optuna.sqlite3` and `results/tuning_summary.json`.
+- Tuning raised mean grouped-CV Top-1 from 58.84% to 59.53% and student-test Top-1 from 70.61% to 71.66%. Candidate log loss increased from 0.2081 to 0.2097. The tuned model is the deployed artifact.
+- The same-algorithm feature ablation measured 59.53% versus 57.19% grouped-CV Top-1 and 71.66% versus 68.25% student-test Top-1 with and without the two heading reliability features. Reference alignment also uses heading. The comparison measures agreement with derived labels. See `results/ablation.json`.
 
-## Stage 1 execution evidence
-- `results/eda/inventory.csv`: all90 permitted trips validated; EDA plots and actual Folium map saved.
-- Initial candidate smoke: train00000001 1315observations/2.33s/miss0.152%; student00000000 2503observations/2.36s/miss3.755% (100m radius).
-- Training-only candidate radius experiment on noisy trip00000054: K10 miss84.658% at100m,54.404% at250m. Radius250m selected for v2; remaining omissions reported, never reference-injected.
-- Custom directed decoder:19behavioral tests passed; actual2503point distance-potential smoke1.32s. This was a decoder benchmark, not trained-model accuracy.
-- EDA: finite rows/valid IDs, disconnected graph components,13train/1student nonadjacent reference steps; derived labels and explicit restarts required.
+## Route reconstruction
 
-## Stage 2 active execution
-- Final v2 cache built for all80training/10student-testing trips.208417/19160GPSobservations retained.
-- Candidate miss rate12.0345%train,4.6451%student-test; completevalidation/test candidate sets; no referenceinsertion.
-- Realtraining smoke2.26s, firsttrainingtrip only, excluded from selection.
-- GaussianNB,LogisticRegression,DecisionTree completed all3groupedfolds and all10studenttrip predictions; ExtraTrees/HGB in progress.
-- 31geometry/alignment/decoder/evaluation behavior tests passed;7APIreadiness/security tests passed, genuine finalmodeltestpending.
-- First source checkpoints published to authorized publicrepository main.
+| Method | Student-test Top-1 | Directed continuity | Ordered-sequence LCS F1 |
+|---|---:|---:|---:|
+| Nearest road | 42.96% | 75.58% | 0.2984 |
+| Tuned Extra Trees | 71.66% | 92.57% | 0.4765 |
+| Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 |
 
-## Stage 2 completed
-- Allfive algorithms fitted/evaluated with3GroupKFold folds acrossall80trainingtrips; all10student-testingpredictions saved permodel.
-- ExtraTrees selected solely by mean groupedCVTop1:0.5883772223. Complete comparison inresults/model_comparison.json/csv.
-- Actual fullcomparison elapsed513.20seconds. Fullvalidation/test candidates retained; modelartifacts andfoldconfigs saved.
-- Stage3A genuineOptunaTPEstarted:8plannedtrials,3startupthen5guided; persistentSQLite study.
+The HMM improved Top-1 on eight trips. It reduced Top-1 on trips `00000000` and `00000007`. All 19,160 observations were retained. Continuity includes 25 unreachable transitions among 19,149 eligible pairs and reports one excluded time gap separately. See `results/hmm_comparison.json` and `results/predictions/HMM/`.
 
-## Bayesian optimization progress
-- Trial0completed in187.3seconds: mean groupedCVTop1=0.5952758852 versusuntuned0.5883772223. Trial0isstartup sampling,notguidedTPE.
-- Eighttrials planned:3startupthen5guided. Estimatedfirst-trialtotal25minutes.
-- Allfive fittedmodelartifacts and50studenttrip predictionfiles pushed to main(2582811).
-- Lightweight UIservice runningonport8800; APIwillstartwhenfinalmodel/configarecomplete.
+## Local verification and deliverables
 
-## Stage 3A search completed; refit active
-- All8 optimization trials executed:3startup and5guidedTPE.
-- Best executed meanCVTop1=0.5952758852.
-- Final refit on all80trainingtrips in progress. Full ten-trip classifier/HMM comparison andliveHTTPchecks follow.
+- All 39 behavior and API tests passed in `results/unit_tests.txt`.
+- All ten live HTTP predictions returned 200. Each trip's Top-1 matched its recorded offline result exactly. Full inference took 0.32–7.82 seconds per trip on the test machine. Reference routes and per-point labels remained on the server. See `results/api_integration.json` and `results/execution_logs/actual_api_server.txt`.
+- Verified desktop and mobile UI captures from a live request to a separate API service on the same machine. Retained the browser log viewer capture and the original text request logs in `results/`.
+- The interactive Folium map includes GPS observations, road graph, supplied student reference and HMM prediction. The consolidated PDF and its source manifest are under `results/`. The project is published at [Pradhyut21/adaptive-map-matching](https://github.com/Pradhyut21/adaptive-map-matching).
 
-## Stages 3A and 3B completed
-- All8TPE trials completed; all80trainingtrips refit with bestCV configuration; tuned anduntuned artifacts retained.
-- Tuned student-testTop1=0.7166492693 vsuntuned0.7060542797; tuned logloss slightly worse(0.209667 vs0.208061),reported.
-- All10student trips decoded withcustomHMM:Top1=0.7613256785,meantripTop1=0.7960259873,continuity=0.9986944488,sequenceLCSF1=0.7946221604.
-- All19160observations retained;25unreachable transitions remaincontinuity failures;1large timegap excludedandreported.
-- APIrunning on0.0.0.0:8000; UIservice on8800. All10liveHTTPrequests andbrowsercapture nowinprogress.
+## Pending team verification
+
+- Run a trip from the second laptop over the LAN and capture the receiving terminal. Follow [the demo instructions](docs/deployment.md).
+- Run the reserved evaluation when the organizers supply their files. Development and verification used the permitted training and student-test trips.
+- Review the implementation and measurements, add the team's interpretation and disclose AI assistance according to the event policy.

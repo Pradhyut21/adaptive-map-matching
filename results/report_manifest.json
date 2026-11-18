@@ -1,0 +1,24 @@
+{
+  "report": "results/PathSnap_Technical_Report.pdf",
+  "generated_ist": "2026-11-18T11:45:33.181272+05:30",
+  "sources": {
+    "results/model_comparison.json": "2d0beab54214d17e64df94af8808ddbb2fe91af230884388049239c5a4394cfe",
+    "results/model_comparison.csv": "5ec1ae4deacee11b2c161a87fe61a6c510b9f91c8a832823518f647652da420b",
+    "results/selection.json": "2b7fc34f90a9ab878f7b77888d324f1e74f255ec9a407a603333b84b6a09cfd3",
+    "results/tuning_summary.json": "78385290a4c90b0e1a5e377ea26036adb0a248be8df5d880dc2d56b9f97506fc",
+    "results/hmm_comparison.json": "911192672b6f22af613217d643f5838341a0a48995e8aef9b450906594c70f33",
+    "results/eda/summary.json": "c9195ddb340d12fe5562de6ceea8dceaf687643aee275918ddd30364d4b7d75f",
+    "results/eda/inventory.csv": "384808de1b987301c55fb83d9b8a635534169759d997b4824b6ea0f8e8aced08",
+    "results/eda/representative_map_metadata.json": "a898d87d37c9a82220944a98522c48c2b00477fd1d1d259138d68b7dcf9b6476",
+    "results/feature_inventory.json": "2ebcf93c85812a71cec9d1029c861e17ce33fdc4705ee4f608c66731bd4b880e",
+    "results/screenshots/capture_metadata.json": "0612d198e698fe5fc946d2f4fe8be338c7fa1141df61922c70a7eb40312e4124",
+    "results/screenshots/folium_map.png": "3b90fd9d4b8a7bf4fc382bf2f466556655b701d3f0e8594d824ab19e2eaf5867",
+    "results/screenshots/ui_desktop.png": "b745b2acfa50464df80b19f53937b2785e248b03c2296156c42c862fbfea4a1c",
+    "results/screenshots/server_logs_browser.png": "cd345620dff6a34f6635307025b76f2af31c7c50881fe0e581a3de4ff3b3cb27",
+    "results/api_integration.json": "16c6774d1b813f723c569871255611072a56ffc0ddbd644e72de4114a93103cf",
+    "results/ablation.json": "f75866759706eccb3f07e30ab26ceadde0b8161e21953abe7b6c71587613f672"
+  },
+  "team_review_required": true,
+  "second_laptop_demo": "pending_without_team_evidence",
+  "hashing": "SHA-256 with LF-normalized JSON and CSV, and original image bytes."
+}

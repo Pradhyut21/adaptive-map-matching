@@ -16,15 +16,21 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Image, PageBreak
 from pathsnap.settings import ROOT
 from pathsnap.metrics import METRIC_DEFINITIONS
 
 RESULTS=ROOT/"results"
 FIGURES=RESULTS/"figures"
+MODEL_LABELS={
+    "GaussianNB":"Gaussian Naive Bayes",
+    "LogisticRegression":"Logistic Regression",
+    "DecisionTree":"Decision Tree",
+    "ExtraTrees":"Extra Trees",
+    "HistGradientBoosting":"Histogram Gradient Boosting",
+}
 MODEL_NOTES={
 "GaussianNB":{
 "family":"Probabilistic",
@@ -64,16 +70,18 @@ def load_json(path, required=True):
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
+def evidence_sha256(path):
+    """Give text evidence the same digest in LF and CRLF checkouts."""
+    data=path.read_bytes()
+    if path.suffix in {".csv", ".json"}:
+        data=data.replace(b"\r\n",b"\n")
+    return hashlib.sha256(data).hexdigest()
+
 def number(value, digits=4):
     if value is None:return "N/A"
     if isinstance(value,(float,np.floating)):
         return f"{value:.{digits}f}" if np.isfinite(value) else "N/A"
     return str(value)
-
-def metric(m, *keys):
-    for key in keys:
-        if key in m:return m[key]
-    return None
 
 def model_records():
     data=load_json(RESULTS/"model_comparison.json")
@@ -110,10 +118,13 @@ def make_comparison_plots(models,tuning,hmm):
     fig.savefig(FIGURES/"log_loss_and_scoring_time.png",dpi=170,bbox_inches="tight");plt.close(fig)
     # Confusion matrices come only from recorded candidate predictions.
     fig,axs=plt.subplots(1,5,figsize=(14,3))
+    heat_max = max(np.log1p(np.asarray(m["student_test"]["confusion_matrix"])).max() for m in models)
     for ax,m in zip(axs,models):
         matrix=np.asarray(m["student_test"]["confusion_matrix"])
-        ax.imshow(np.log1p(matrix),cmap="Blues")
-        for (r,c),v in np.ndenumerate(matrix):ax.text(c,r,str(v),ha="center",va="center",fontsize=8,color="black")
+        ax.imshow(np.log1p(matrix),cmap="Blues",vmin=0,vmax=heat_max)
+        for (row,col),count in np.ndenumerate(matrix):
+            text_color = "white" if np.log1p(count) > 0.6 * heat_max else "#132c39"
+            ax.text(col,row,f"{count:,}",ha="center",va="center",fontsize=8,color=text_color)
         ax.set(xticks=[0,1],yticks=[0,1],xlabel="Predicted",title=m["name"].replace("Gradient","\nGradient"));ax.tick_params(labelsize=8)
     axs[0].set_ylabel("True candidate class")
     fig.suptitle("Student-test candidate confusion matrices (0 = nonmatch, 1 = match)")
@@ -149,7 +160,9 @@ class Report:
         self.styles.add(ParagraphStyle(name="BodyCompact",fontName="Helvetica",fontSize=10.2,leading=14,spaceAfter=7,textColor=colors.HexColor("#23343e")))
         self.styles.add(ParagraphStyle(name="SmallText",fontName="Helvetica",fontSize=8,leading=10,spaceAfter=5))
         self.styles.add(ParagraphStyle(name="Cell",fontName="Helvetica",fontSize=7.3,leading=9))
+        self.styles.add(ParagraphStyle(name="CellHeader",parent=self.styles["Cell"],fontName="Helvetica-Bold",textColor=colors.HexColor("#174954")))
         self.styles.add(ParagraphStyle(name="CodeSmall",fontName="Courier",fontSize=7.2,leading=10,spaceAfter=5))
+        self.styles.add(ParagraphStyle(name="CoverTitle",fontName="Helvetica-Bold",fontSize=31,leading=36,spaceAfter=6,textColor=colors.HexColor("#103742")))
         self.styles["Heading1"].textColor=colors.HexColor("#075663")
         self.styles["Heading2"].textColor=colors.HexColor("#075663")
         self.story=[]
@@ -160,18 +173,21 @@ class Report:
     def heading(self,text):self.p(escape(text),"Heading1")
     def subheading(self,text):self.p(escape(text),"Heading2")
     def page(self):self.story.append(PageBreak())
-    def table(self,rows,widths=None):
-        cells=[[Paragraph(escape(str(v)).replace("\n","<br/>"),self.styles["Cell"]) for v in row] for row in rows]
+    def table(self,rows,widths=None,padding=6):
+        cells=[[Paragraph(escape(str(v)).replace("\n","<br/>"),self.styles["CellHeader" if i==0 else "Cell"]) for v in row] for i,row in enumerate(rows)]
         t=Table(cells,colWidths=widths,repeatRows=1,hAlign="LEFT")
-        t.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,0),colors.HexColor("#dceef0")),("VALIGN",(0,0),(-1,-1),"TOP"),("GRID",(0,0),(-1,-1),.35,colors.HexColor("#c2d1d5")),("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6),("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white,colors.HexColor("#f5f8f9")])]))
-        self.story.extend([t,Spacer(1,10)])
-    def image(self,path,max_width=700,max_height=320):
+        t.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,0),colors.HexColor("#dceef0")),("VALIGN",(0,0),(-1,-1),"TOP"),("GRID",(0,0),(-1,-1),.35,colors.HexColor("#c2d1d5")),("TOPPADDING",(0,0),(-1,-1),padding),("BOTTOMPADDING",(0,0),(-1,-1),padding),("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white,colors.HexColor("#f5f8f9")])]))
+        t.spaceAfter = 10
+        self.story.append(t)
+    def image(self,path,max_width=720,max_height=320,align="CENTER"):
         p=Path(path)
         if not p.exists():self.p(f"Evidence image pending: {escape(str(p.relative_to(ROOT)))}.");return
         from PIL import Image as PILImage
         with PILImage.open(p) as im:w,h=im.size
         scale=min(max_width/w,max_height/h)
-        self.story.extend([Image(str(p),width=w*scale,height=h*scale,hAlign="LEFT"),Spacer(1,7)])
+        visual=Image(str(p),width=w*scale,height=h*scale,hAlign=align)
+        visual.spaceAfter=7
+        self.story.append(visual)
 
 def _footer(canvas,doc):
     canvas.saveState();w,h=landscape(A4)
@@ -185,8 +201,8 @@ def add_reliability_ablation(report, evidence):
     """Optional same-algorithm feature comparison, only from executed records."""
     full=evidence["full_features"]
     reduced=evidence["without_reliability"]
-    report.page();report.heading("3.4 Optional Motion-Reliability Feature Ablation")
-    report.p(f"This experiment is a feature variant of the selected {escape(evidence['algorithm'])} algorithm, not a sixth algorithm. It removes {escape(', '.join(evidence['removed_features']))} while retaining unweighted heading and the same heading smoothing. Both variants use identical fixed final hyperparameters, trip-grouped folds and training-negative sampler.")
+    report.page();report.heading("3.4 Heading Reliability Feature Ablation")
+    report.p(f"Both variants use the selected {escape(evidence['algorithm'])} algorithm, final hyperparameters, trip folds and negative sampling. The ablation removes {escape(', '.join(evidence['removed_features']))} while retaining the original smoothed heading.")
     report.p(f"<b>Fixed parameters:</b> {escape(json.dumps(evidence['fixed_params'],sort_keys=True))}","SmallText")
     report.p(f"<b>Hypothesis:</b> {escape(str(evidence['hypothesis']))}")
     rows=[["Feature variant","CV fold-mean Top-1","CV Macro F1","Student Top-1","Student Macro F1","Student log loss"]]
@@ -203,7 +219,7 @@ def add_reliability_ablation(report, evidence):
         if value>0:return "improvement"
         if value<0:return "regression"
         return "no change"
-    report.p(f"Using full features yields a grouped-CV Top-1 {outcome(delta[0])} of {abs(delta[0]):.5f} and a student-test Top-1 {outcome(delta[2])} of {abs(delta[2]):.5f} relative to removing reliability. Positive deltas favor the full feature set for Top-1 and F1; negative log-loss delta favors the full feature set. This is a factual comparison against derived reference labels, not a claim of independent physical-position accuracy.")
+    report.p(f"Using full features yields a grouped-CV Top-1 {outcome(delta[0])} of {abs(delta[0])*100:.2f} percentage points and a student-test Top-1 {outcome(delta[2])} of {abs(delta[2])*100:.2f} points. Higher Top-1 and F1 and lower log loss indicate better performance against the derived reference labels.")
     fig,ax=plt.subplots(figsize=(10,3.3));x=np.arange(4)
     ax.bar(x-.18,values[0][:4],width=.36,color="#087f8c",label="Full features")
     ax.bar(x+.18,values[1][:4],width=.36,color="#9eafb6",label="Without reliability")
@@ -214,28 +230,39 @@ def add_reliability_ablation(report, evidence):
     target=FIGURES/"motion_reliability_ablation.png"
     fig.savefig(target,dpi=170,bbox_inches="tight");plt.close(fig)
     report.image(target,max_height=205)
-    report.p(f"<b>Selection effect:</b> {escape(str(evidence['selection_effect']))} The final artifact was frozen before this ablation. No student-test-based retuning or model replacement is implied. Elapsed experiment time: {number(evidence['elapsed_seconds'],2)} seconds.","SmallText")
-    report.p(f"<b>Limitations:</b> {escape(str(evidence['limitations']))} The label-alignment procedure also contains a heading term, so agreement with these derived labels is not independent evidence of physical accuracy. This comparison removes the two reliability columns but does not remove all heading information.","SmallText")
+    report.p(f"The final artifact was frozen before this experiment, which took {number(evidence['elapsed_seconds'],2)} seconds. The label alignment also uses heading, so the comparison measures agreement with that alignment. The two variants retain the same smoothed heading inputs and sequence decoding is outside the ablation.","SmallText")
 
 def build_report():
-    comparison,models=model_records()
+    _,models=model_records()
     eda=load_json(RESULTS/"eda"/"summary.json")
     selection=load_json(RESULTS/"selection.json")
     tuning=load_json(RESULTS/"tuning_summary.json")
     hmm=load_json(RESULTS/"hmm_comparison.json")
     api=load_json(RESULTS/"api_integration.json",False)
     ablation=load_json(RESULTS/"ablation.json",False)
-    prep=load_json(RESULTS/"prepare_summary.json",False)
+    capture=load_json(RESULTS/"screenshots"/"capture_metadata.json",False)
     make_comparison_plots(models,tuning,hmm)
     r=Report()
-    r.p("PATHSNAP TRACE-LITE","Title")
+    r.p("PathSnap Trace-Lite","CoverTitle")
     r.p("Distributed map matching and route reconstruction","Heading2")
     now=datetime.now(timezone(timedelta(hours=5,minutes=30)))
-    r.p(f"Generated from recorded artifacts: {now:%d %B %Y, %H:%M IST}")
-    r.p("<b>Review status:</b> AI-assisted implementation and evidence compilation. This report summarizes executed code and stored metrics; the team must review the implementation, verify results, add its own interpretation, and disclose assistance according to the event policy. No second-laptop demonstration is claimed without recorded evidence.")
+    r.p(f"Technical report generated from execution records on {now:%d %B %Y at %H:%M IST}.")
     r.p("The system generates candidate directed road arcs from GPS and road geometry, learns candidate scores, and reconstructs routes using an independent log-space Viterbi decoder. Reference-route data is confined to permitted label derivation and server-side evaluation after inference.")
-    r.p("<b>Evidence index:</b> results/eda/inventory.csv; results/model_comparison.json and .csv; results/cv/; results/models/; results/tuning_summary.json; results/hmm_comparison.json; results/predictions/; artifacts/; results/api_integration.json and actual screenshots when recorded.")
-    r.p("<b>Important:</b> pointwise labels are derived from supplied chronological route sequences. They are approximate reference labels, not independently surveyed physical ground truth. No exact official aggregate scoring formula is asserted.")
+    aggregate=hmm["hmm"]["aggregate"]
+    best_model=tuning["selected_model"]
+    selected_name=escape(MODEL_LABELS.get(best_model,best_model))
+    version="tuned " if tuning["used_tuned_model"] else ""
+    r.p(f"The final {version}{selected_name} classifier was chosen by three-fold trip-grouped validation on 80 training trips. Route comparisons use {aggregate['observations']:,} observations across {aggregate['trips']} student-test trips.")
+    summary_rows=[["Student-test method","Observation Top-1","Directed continuity","Ordered-sequence LCS F1"]]
+    for key,label in (("baseline","Nearest road"),("classifier","Selected classifier"),("hmm","Selected classifier + HMM")):
+        item=hmm[key]["aggregate"]
+        summary_rows.append([label,f"{item['top1_accuracy']:.2%}",f"{item['route_continuity']:.2%}",number(item['sequence_lcs_f1'])])
+    r.table(summary_rows,[220,160,155,190])
+    if api and api.get("requests"):
+        passed=sum(request.get("http_status")==200 for request in api["requests"])
+        r.p(f"The local HTTP check returned {passed} successful predictions from {len(api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
+    r.p("Pointwise accuracy uses approximate labels derived from the supplied chronological route sequences. The sequence and continuity metrics are project diagnostics.")
+    r.p("AI assisted implementation, debugging and evidence compilation. The team must verify the implementation, interpret results independently and disclose the assistance according to the event policy.")
     r.page();r.heading("2.2 Dataset Understanding and EDA")
     r.p("All 80 training and 10 student-testing trips were inspected. No evaluator-testing files were used. Raw files are whitespace-delimited without headers: .track = longitude, latitude, seconds; .nodes = longitude, latitude; .arcs = directed node pairs; .route = chronological reference arc IDs. Node and arc row indexes are trip-local identifiers.")
     rows=[["Partition","Trips","GPS observations","Node rows summed","Arc rows summed","Largest gap (s)","1-second intervals"]]
@@ -247,12 +274,12 @@ def build_report():
     r.p(f"Measured checks found {a['track_nonfinite_values']+b['track_nonfinite_values']} nonfinite track values, {a['invalid_arc_rows']+b['invalid_arc_rows']} invalid arc-endpoint rows, and {a['invalid_route_rows']+b['invalid_route_rows']} invalid reference IDs. Training graphs contain up to {int(a['arcs_rows']['maximum']):,} arcs. Maximum weak-component counts are {int(a['weak_components']['maximum'])} (train) and {int(b['weak_components']['maximum'])} (student-test). No isolated nodes were found.")
     r.p(f"The reference lists contain {a['nonadjacent_reference_steps']} train and {b['nonadjacent_reference_steps']} student-test nonadjacent consecutive arc steps. Repeated reference arcs occur, reaching {int(b['repeated_reference_arcs']['maximum'])} repeated occurrences in one student trip. These diagnostics motivate preserving reference-sequence positions and disclosing approximate alignment.")
     r.p("Preprocessing uses a trip-centered WGS84 azimuthal-equidistant projection in metres, exact point-to-segment distance, a Shapely STRtree and ten-candidate bounded lists. The final feature cache uses a 250 m radius selected from training-only candidate coverage checks; the earlier 100 m smoke setting is not mixed into final training. Empty local queries may expand within the documented maximum radius; observations outside this limit remain unmatched. Networks are processed one trip at a time. The source inventory includes SHA-256 file checksums.")
-    r.image(RESULTS/"eda"/"trip_and_graph_counts.png",max_height=235)
+    r.image(RESULTS/"eda"/"trip_and_graph_counts.png",max_height=200)
     r.page();r.subheading("EDA observations and feature design")
-    r.image(RESULTS/"eda"/"gaps_and_connectivity.png",max_height=230)
-    r.image(RESULTS/"eda"/"missing_values.png",max_height=150)
+    r.image(RESULTS/"eda"/"gaps_and_connectivity.png",max_height=173)
+    r.image(RESULTS/"eda"/"missing_values.png",max_height=113)
     r.p("Candidate features include distance, log distance, heading disagreement, reliability-weighted heading disagreement, motion reliability, projection fraction, segment length, observed speed, time interval, distance rank, distance above best, heading sine/cosine and candidate count. IDs are excluded. Symmetric motion smoothing uses neighboring observations, so the implementation performs offline reconstruction rather than claiming causal tracking. Learned preprocessing is fitted within training folds.")
-    r.p("Pointwise reference labels are derived with sparse dynamic programming over reference-route positions, preserving repeated occurrences. Alignment emission cost combines squared segment distance (20 m scale) with a small reliability-weighted heading term; transitions favor monotone progress consistent with observed displacement. Impossible monotone steps use a logged exact nearest-reference fallback. These labels therefore share geometric and motion assumptions with the prediction features and are not independent physical point ground truth. Ordered-sequence comparison against the supplied route is a complementary diagnostic.")
+    r.p("Sparse dynamic programming derives labels from ordered reference-route positions and preserves repeated arcs. Its emission cost combines squared segment distance at a 20 m scale with a small reliability-weighted heading term. Transitions favor monotone progress consistent with observed displacement. Impossible monotone steps trigger a logged exact nearest-reference fallback. Pointwise evaluation shares these geometry and motion assumptions with the features. Ordered-sequence agreement provides a complementary check.")
     inventory=load_json(RESULTS/'feature_inventory.json',False)
     if inventory:
         trips=inventory['trips'];total=sum(t['observations'] for t in trips)
@@ -266,7 +293,9 @@ def build_report():
     columns=["Model","Algorithm Family","Key Configuration","CV Macro F1-score","Top-1 Accuracy","Route continuity","Student-Test Macro F1-score","Log Loss","Inference Time"]
     rows=[columns]
     for _,row in csv.iterrows():
-        rows.append([number(row[c]) if isinstance(row[c],(float,np.floating)) else row[c] for c in columns])
+        values=[number(row[c]) if isinstance(row[c],(float,np.floating)) else row[c] for c in columns]
+        values[0]=MODEL_LABELS.get(values[0],values[0])
+        rows.append(values)
     r.table(rows,[80,65,170,65,60,65,70,55,55])
     r.p("Top-1 Accuracy, Route continuity, Student-Test Macro F1-score and Log Loss in this table refer to the student-testing partition; CV Macro F1-score refers to held-out training trips. Inference Time is classifier scoring from cached features; complete loading, candidates and decoding costs are reported separately.")
     r.p(f"<b>Model selection:</b> {escape(selection['selected_model'])}. {escape(selection['reason'])} Grouped validation mean Top-1 = {number(selection.get('cv_top1'))}. This is a measured selection, not a model chosen from training accuracy alone.")
@@ -275,7 +304,7 @@ def build_report():
     for i,m in enumerate(models):
         if i and i%2==0:r.page()
         name=m["name"];notes=MODEL_NOTES.get(name,{})
-        r.subheading(name)
+        r.subheading(MODEL_LABELS.get(name,name))
         for key in ("suitability","strengths","limitations","objective"):
             r.p(f"<b>{key.capitalize()}:</b> {escape(notes.get(key,'See recorded estimator configuration.'))}")
         r.p(f"<b>Configuration:</b> {escape(json.dumps(m['params'],sort_keys=True))}","SmallText")
@@ -322,8 +351,8 @@ def build_report():
         rows.append([label,number(a["top1_accuracy"]),number(a["mean_trip_top1_accuracy"]),number(a["route_continuity"]),number(a["sequence_lcs_f1"]),number(a["prediction_coverage"]),a["eligible_transitions"],a["excluded_time_gaps"]])
     r.table(rows,[110,65,95,75,95,70,100,75])
     r.p(f"HMM decoder-only time across all ten cached student trips: {number(hmm['hmm']['aggregate']['inference_seconds'],2)} seconds. This excludes feature preparation and model scoring; live API timing measures the complete prediction pipeline. Candidate-miss rate on these shared candidates is {number(hmm['hmm']['aggregate']['candidate_miss_rate'])}. {escape(hmm['methodology'])}","SmallText")
-    r.image(FIGURES/"classifier_vs_hmm.png",max_height=230)
-    r.p("Continuity counts feasible directed transitions within the recorded routing/time bounds. Eligible missing or unreachable predictions fail; exogenous invalid/large timestamp gaps are excluded and counted separately. Coverage and restarts are disclosed. Ordered-sequence performance is exact bitset LCS F1 = 2*LCS/(predicted sequence length + reference sequence length), a diagnostic rather than an official scoring formula.")
+    r.image(FIGURES/"classifier_vs_hmm.png",max_height=142)
+    r.p("Continuity measures directed reachability over eligible adjacent observations within the recorded routing bounds. Missing or unreachable predictions fail. The excluded invalid or large time gaps are counted separately. Ordered-sequence LCS F1 is twice the longest common subsequence length divided by the sum of the predicted and reference sequence lengths.","SmallText")
     r.page();r.subheading("Per-trip reconstruction evidence and failure cases")
     rows=[["Trip","Nearest Top-1","Classifier Top-1","HMM Top-1","HMM continuity","HMM LCS F1","Restarts","Decoder seconds"]]
     for b,c,h in zip(hmm["baseline"]["trips"],hmm["classifier"]["trips"],hmm["hmm"]["trips"]):
@@ -350,21 +379,23 @@ def build_report():
     r.p("Backend command: python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000","CodeSmall")
     r.p("Laptop 2 command: python -m http.server 8800 --directory frontend","CodeSmall")
     if api:
-        for key,value in api.items():
-            if not isinstance(value,(dict,list)):r.p(f"<b>{escape(key.replace('_',' '))}:</b> {escape(str(value))}")
         requests=api.get("requests",[])
         if requests:
-            rows=[["Trip","HTTP status","Observations","HTTP elapsed (s)","Run ID"]]
+            rows=[["Trip","HTTP status","Observations","Inference (s)","HTTP elapsed (s)","Run ID"]]
             for request in requests:
-                rows.append([request["trip_id"],request.get("http_status","N/A"),request.get("observations","N/A"),number(request.get("http_seconds"),2),request.get("run_id","N/A")])
-            r.table(rows,[90,85,100,110,300])
-        r.p("See results/api_integration.json and retained actual server request logs for the full same-machine integration evidence. These checks execute the real API but do not establish a successful request from a second physical device.")
+                rows.append([request["trip_id"],request.get("http_status","N/A"),request.get("observations","N/A"),number(request.get("timing",{}).get("inference_seconds"),2),number(request.get("http_seconds"),2),request.get("run_id","N/A")])
+            r.table(rows,[105,95,105,105,115,160],padding=4)
+            passed=sum(request.get("http_status")==200 for request in requests)
+            r.p(f"Same-machine integration returned HTTP 200 for {passed} of {len(requests)} requests in {escape(api['partition'])}. See results/api_integration.json and results/execution_logs/actual_api_server.txt.","SmallText")
     else:r.p("<b>API verification record pending.</b> No successful API execution is inferred from source code alone.")
-    r.p("<b>Second-laptop LAN demonstration:</b> pending unless the team adds real evidence from the second physical device. Local browser/API checks do not establish a successful two-device demonstration.")
+    r.p("The physical two-laptop LAN demonstration and receiving-terminal screenshot are pending. See docs/deployment.md for the demonstration procedure.","SmallText")
     r.page();r.subheading("Actual working interface")
     screenshot=RESULTS/"screenshots"/"ui_desktop.png"
     if not screenshot.exists():screenshot=RESULTS/"screenshots"/"ui.png"
-    if screenshot.exists():r.image(screenshot,max_height=330)
+    if screenshot.exists():
+        r.image(screenshot,max_height=418)
+        if capture:
+            r.p(f"Local browser run {escape(capture['run_id'])} reconstructed student-test trip {escape(capture['trip_id'])} from {capture['observation_count']:,} GPS observations. The separate frontend and API services ran on the same machine.","SmallText")
     else:r.p("Working-UI screenshot pending at generation time.")
     server=RESULTS/"screenshots"/"api_terminal.png"
     if server.exists():r.page();r.subheading("Actual API receiving-terminal evidence");r.image(server,max_height=380)
@@ -372,22 +403,32 @@ def build_report():
         logs=RESULTS/"screenshots"/"server_logs_browser.png"
         if logs.exists():
             r.page();r.subheading("Actual server logs displayed in the browser")
-            r.image(logs,max_height=365)
-            r.p("This screenshot displays recorded server logs in a browser. It is not a screenshot of a receiving CMD/terminal, and it does not establish a second-laptop LAN demonstration.","SmallText")
-        r.p("Receiving-laptop CMD/terminal screenshot remains pending; retained logs and the browser log viewer do not substitute for the required physical demonstration screenshot.")
+            r.image(logs,max_height=408)
+            r.p("The server log viewer displays the stored request record from the browser run. The report archive also contains the server's original text log.","SmallText")
+        r.p("The receiving-terminal screenshot remains pending until the physical demonstration.","SmallText")
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
     r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
     r.p("The team should verify the recorded results, discuss cases where HMM helps or hurts, review all source code and configurations, conduct the physical LAN demonstration, and add its own conclusions. AI assistance supported implementation, debugging and evidence compilation; this document must not be misrepresented as independent student analysis.")
     r.subheading("Research concepts credited")
-    r.p("Newson and Krumm (2009), Hidden Markov Map Matching Through Noise and Sparseness; Yang and Gidofalvi (2018), Fast Map Matching; Yang and Meng (2014), Feature Engineering for Map Matching of Low-Sampling-Rate GPS Trajectories. Existing engines were conceptual references; no complete external matcher is used as this decoder.","SmallText")
+    r.p('Newson and Krumm (2009), <link href="https://www.microsoft.com/en-us/research/publication/hidden-markov-map-matching-noise-sparseness/" color="#075663">Hidden Markov Map Matching Through Noise and Sparseness</link>.',"SmallText")
+    r.p('Yang and Gidofalvi (2018), <link href="https://doi.org/10.1080/13658816.2017.1400548" color="#075663">Fast map matching, an algorithm integrating hidden Markov model with precomputation</link>.',"SmallText")
+    r.p('Yang and Meng (2014), <link href="https://arxiv.org/abs/1409.0797" color="#075663">Feature Engineering for Map Matching of Low-Sampling-Rate GPS Trajectories</link>.',"SmallText")
     target=RESULTS/"PathSnap_Technical_Report.pdf"
     doc=SimpleDocTemplate(str(target),pagesize=landscape(A4),rightMargin=35,leftMargin=35,topMargin=34,bottomMargin=42,title="PathSnap Trace-Lite Technical Report",author="PathSnap team - AI-assisted execution evidence")
     doc.build(r.story,onFirstPage=_footer,onLaterPages=_footer)
     source_files=[RESULTS/"model_comparison.json",RESULTS/"model_comparison.csv",RESULTS/"selection.json",RESULTS/"tuning_summary.json",RESULTS/"hmm_comparison.json",RESULTS/"eda"/"summary.json",RESULTS/"eda"/"inventory.csv",RESULTS/"eda"/"representative_map_metadata.json"]
+    source_files += [path for path in (RESULTS/"feature_inventory.json",RESULTS/"screenshots"/"capture_metadata.json",RESULTS/"screenshots"/"folium_map.png",screenshot,RESULTS/"screenshots"/"server_logs_browser.png",server) if path.is_file()]
     if (RESULTS/"api_integration.json").exists():source_files.append(RESULTS/"api_integration.json")
     if ablation is not None:source_files.append(RESULTS/"ablation.json")
-    manifest={"report":str(target.relative_to(ROOT)),"generated_ist":now.isoformat(),"sources":{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_files},"team_review_required":True,"second_laptop_demo":"pending_without_team_evidence"}
+    manifest={
+        "report":target.relative_to(ROOT).as_posix(),
+        "generated_ist":now.isoformat(),
+        "hashing":"SHA-256 with LF-normalized JSON and CSV, and original image bytes.",
+        "sources":{p.relative_to(ROOT).as_posix():evidence_sha256(p) for p in source_files},
+        "team_review_required":True,
+        "second_laptop_demo":"pending_without_team_evidence",
+    }
     (RESULTS/"report_manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print(f"Generated {target}",flush=True)
     return target

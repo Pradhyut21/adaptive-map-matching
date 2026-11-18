@@ -1,0 +1,9 @@
+{
+  "local_http_integration": "passed_all10student_trips",
+  "separate_frontend_service": "http://127.0.0.1:8800",
+  "api_service": "http://127.0.0.1:8000",
+  "physical_two_laptop_demonstration": "pending_user_will_perform_later",
+  "receiving_terminal_screenshot": "pending_physical_demonstration",
+  "browser_log_screenshot": "actual_recorded_requests_not_a_terminal_screenshot",
+  "user_confirmation": "User replied: I will perform this later"
+}
