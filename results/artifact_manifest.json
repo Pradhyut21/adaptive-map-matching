@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-18T10:12:54.472149+00:00",
+  "generated_utc": "2026-11-18T10:43:06.417025+00:00",
   "hashing": "SHA-256 of each file as stored in the submission ZIP.",
   "files": {
     ".gitattributes": {
@@ -86,9 +86,13 @@
       "bytes": 4645,
       "sha256": "c777be2a6a27ef3110afd90bba545447c0623c0c65c72ffc2b5ae821be84edf1"
     },
+    "docs/deliverables.md": {
+      "bytes": 3747,
+      "sha256": "00d6a65d3c317c64a7d5b5848b416e7c21a94660365151c95401a0b2a9144cd2"
+    },
     "docs/deployment.md": {
-      "bytes": 3652,
-      "sha256": "9cbd4aa46665cdebae8ce01c2fd9c07aa3c9c6504c34e767c168656bb629cea1"
+      "bytes": 4386,
+      "sha256": "96963fb7fa285ea29bc6b0d5de92aba0386901ac4e9d5a38838549e4e848e972"
     },
     "docs/model_notes.md": {
       "bytes": 2425,
@@ -183,8 +187,8 @@
       "sha256": "b14b6acba8e9b5e851144d48100ac2d360e3626f6812fb6fd7b53b9761760ada"
     },
     "README.md": {
-      "bytes": 14655,
-      "sha256": "5c95ccfd9391c0a9dc3f2493ef6c775788ecc249016889f42ca7bf75026f9531"
+      "bytes": 15223,
+      "sha256": "1fc1bb3e47ea07fccb8de14b7b216696133ed1fd5e5b00f7aeaf83f6bdec55dd"
     },
     "requirements-dev.txt": {
       "bytes": 39,
@@ -221,6 +225,14 @@
     "results/context-boost-v1/boost_tuning.json": {
       "bytes": 2997,
       "sha256": "258fb50b1fb181d6568b6adf2273180a760f9d362e5e5bcd5c7d1af3b3e27bf2"
+    },
+    "results/context-boost-v1/boost_tuning_comparison.csv": {
+      "bytes": 464,
+      "sha256": "04f58102558fcfe99e64b07d95752d37333f1070622d19313e30324ccb0b700e"
+    },
+    "results/context-boost-v1/boost_tuning_comparison.json": {
+      "bytes": 5661,
+      "sha256": "f4bc67b14f3d6f6388af6a994c7ca40ec04ba2fbb7c341321af511cb959087bc"
     },
     "results/context-boost-v1/decoder_selection.json": {
       "bytes": 55287,
@@ -579,8 +591,8 @@
       "sha256": "1381e478157681d850781e606a23c222f1a95d492e665471bd2353754d81e965"
     },
     "results/PathSnap_Technical_Report.pdf": {
-      "bytes": 2086221,
-      "sha256": "0d737b7ba3d294689b8688d22850e2add2579e1f199fd18dff14483a012b71e1"
+      "bytes": 1708651,
+      "sha256": "99aae3a36f56986fbbe7e5bd3f699c514467dbadf98f0d8e4e2121a53e8d6648"
     },
     "results/predictions/DecisionTree/00000000.npz": {
       "bytes": 20894,
@@ -943,12 +955,20 @@
       "sha256": "46462c0c12eda80a96d8db77b350e59899fedd650e0bc3d56c502960d3c551d1"
     },
     "results/report_manifest.json": {
-      "bytes": 3659,
-      "sha256": "970aa9774c207d9bc13ccfe9afb97f66dc2516316cd94982d6db1a64166117c4"
+      "bytes": 4209,
+      "sha256": "b9f3a9504d2af8ade66213617e087668b0e255468054e9143403efe5895a5477"
     },
     "results/route-context-v1/api_integration.json": {
       "bytes": 18525,
       "sha256": "005baa3716c6b329bf30edd736b132ede7130c3fb5f50f5b11a69d13ac4bcec3"
+    },
+    "results/route-context-v1/classifier_decoder_comparison.csv": {
+      "bytes": 1588,
+      "sha256": "39f9d36a2ef0806f7aa65b82e98fd3fad777e6da93c671f5f3ac26967e1b94af"
+    },
+    "results/route-context-v1/classifier_decoder_comparison.json": {
+      "bytes": 36786,
+      "sha256": "ebccb8c7b16a79c58b09d4c1727e5a1f3d111af692537d9bc09aeb757f627de8"
     },
     "results/route-context-v1/decoder_selection.json": {
       "bytes": 112149,
@@ -981,6 +1001,22 @@
     "results/route-context-v1/grouped_comparison.json": {
       "bytes": 25718,
       "sha256": "e2a4af14c4b493e156e97ae497589128c37ff055aaab2e3c4a63f66edb2d53ef"
+    },
+    "results/route-context-v1/map/folium_map.png": {
+      "bytes": 125423,
+      "sha256": "7951d647b8fccaff2b8af002391e813c5296fc74eeb3a80fc01e965db5592126"
+    },
+    "results/route-context-v1/map/representative_geographical_view.png": {
+      "bytes": 124724,
+      "sha256": "c039676fd30d06eb8f230f32853cf4f8ce29cd98a6f1f9b12abb9b8a93e4d651"
+    },
+    "results/route-context-v1/map/representative_map.html": {
+      "bytes": 283880,
+      "sha256": "dfa95b640eedeca1088ad9d5f97f8f794e549725c38956579c482760e2607f36"
+    },
+    "results/route-context-v1/map/representative_map_metadata.json": {
+      "bytes": 333,
+      "sha256": "4e4aaf3adb96a96aa82e9d2083d64dce4d45d22b6c573a4561e274546c5ed9ad"
     },
     "results/route-context-v1/predictions/ordered_route_boost/00000000.npz": {
       "bytes": 2385,
@@ -1186,9 +1222,13 @@
       "bytes": 8490,
       "sha256": "84189b917393696e429a5734393c3ffab744df490171d2d70a3ba4265a01d8aa"
     },
+    "scripts/deliverable_metrics.py": {
+      "bytes": 9971,
+      "sha256": "3734d01573f22dfa4ebb2aad55076b6c5d02cf901d2e34a827d66d8d76c5e61c"
+    },
     "scripts/eda.py": {
-      "bytes": 13412,
-      "sha256": "7f0895491f72ec70bfdc6d78c14808b7b3eb8386bf38d9b695aeac4a04b35a51"
+      "bytes": 15323,
+      "sha256": "2c02b39c53bc111a71f2a98b3bc7f48b63a162f57ec423e6e7411f1161b300a4"
     },
     "scripts/evaluate.py": {
       "bytes": 7039,
@@ -1211,8 +1251,8 @@
       "sha256": "c6739ed969a3422edcf634653ff1e3f86f5b02911b75b02bb7ef4a75a887a6ef"
     },
     "scripts/report.py": {
-      "bytes": 57760,
-      "sha256": "df0a1496a3c9bba2af503f04b5e2c761d748a68888c66f8a54873d4a74772e33"
+      "bytes": 63581,
+      "sha256": "ac42fd06505ff21a346e0b61f911b9188b300264cde81d8f13749df3e4308dd7"
     },
     "scripts/train.py": {
       "bytes": 8273,
@@ -1227,8 +1267,8 @@
       "sha256": "0f59f1ca15c5acd8a29740970e4377612839278af1aabf750c9e4ab29cb9e3b5"
     },
     "STATUS.md": {
-      "bytes": 6362,
-      "sha256": "d1236e9cd367395ceaeee24b00ffabd9360045d39efaff675f6f2d3000074bc1"
+      "bytes": 6657,
+      "sha256": "1430ecef7d37eb6832f3ba7f872826420f4290b31865591a59659049dbc2efe9"
     },
     "tests/test_api.py": {
       "bytes": 8077,

@@ -30,6 +30,8 @@ The original HMM improved Top-1 over the Extra Trees classifier on eight trips a
 
 ## Local verification and deliverables
 
+- The [deliverables checklist](docs/deliverables.md) maps the official repository and report requirements to the submitted files. The consolidated report includes the matched boosting tuning table, the active model's classifier-only versus Viterbi comparison, and the live Folium map export.
+
 - The active matcher passed 51 unit and API tests. All ten genuine predictions from the host's Wi-Fi address returned 200 and exactly reproduced both offline Top-1 measures and the route LCS F1. The live desktop and mobile run had no page errors or horizontal overflow. See `results/route-context-v1/`. The separate-device test needs a client on Laptop 2.
 
 - All 49 behavior and API tests passed in `results/context-boost-v1/unit_tests.txt`, including the new contextual features, frozen artifact selection and decoder edge cases.

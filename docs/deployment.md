@@ -45,3 +45,11 @@ For a same-laptop integration check, serve the UI on port 8800 and use API addre
 **Second-laptop LAN demonstration: PENDING until performed with the team's second device.**
 
 During that demonstration, capture the actual Laptop 2 UI showing a completed trip and Laptop 1's terminal showing the receiving API requests. Record the time, trip, API address and response run ID. Keep screenshots with the experiment evidence and update `STATUS.md` only after the demonstration occurs. Do not substitute generated terminal images or a same-machine test for two-device evidence.
+
+On Laptop 1, start Uvicorn in a visible Command Prompt using the command above. If the current local service is already writing `results/route_live_server.log`, open Command Prompt in the project directory and follow the receiving log there:
+
+```cmd
+powershell -NoProfile -Command "Get-Content -LiteralPath 'results/route_live_server.log' -Tail 12 -Wait"
+```
+
+Run a trip from Laptop 2. Capture the CMD window after it shows the matching run ID, request, and HTTP 200. Save the real terminal capture as `results/route-context-v1/screenshots/api_terminal.png` so the consolidated report can include it. Keep the Laptop 2 UI capture and the run ID with the evidence. Run `python -m scripts.report --render` after adding the screenshot.

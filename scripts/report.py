@@ -361,12 +361,46 @@ def add_route_alignment_comparison(report, student, selection, grouped, live):
     report.p(f"The two alignment algorithms assign different arc labels to {active['label_changes']:,} of the {active['observations']:,} student-test observations. The table shows each pipeline under both label sets. Ordered LCS F1 compares reconstructed and supplied arc sequences directly. The student-test trips are a reused benchmark.", "SmallText")
     if live and live.get("all_passed"):
         report.p(f"All {len(live['requests'])} HTTP predictions reproduced the full-route and earlier-label Top-1 and ordered LCS F1. The recorded LAN-address browser checks ran on the backend host.", "SmallText")
-    screenshot=ROUTE_RESULTS/"screenshots/ui_desktop.png"
-    if screenshot.is_file():
-        report.page()
-        report.subheading("Active model - live LAN-address browser check")
-        report.image(screenshot,max_height=386)
-        report.p("A browser on the backend host loaded the frontend from a separate HTTP origin and sent a real inference request to the Wi-Fi address. Both reference alignment scores are displayed. The physical second-laptop run is pending.", "SmallText")
+
+
+def add_boost_comparison(report, evidence, search):
+    report.page()
+    report.subheading("Histogram Gradient Boosting - before and after Bayesian optimization")
+    report.p("This experiment tunes the contextual boosting recipe used as one component of the active blend. The second component is fitted on full-route labels using the winning hyperparameters. Both comparison rows use the original contextual features, frozen labels, and identical train and student-test trip partitions.")
+    report.p("The TPE search maximized the mean observation Top-1 across three trip-grouped folds. It tested 31, 63 or 95 leaves and 120, 160 or 220 iterations. It sampled minimum leaf size from 20 to 120, learning rate from 0.06 to 0.17, and L2 regularization from 0.2 to 12 on log scales.")
+    best=next(trial for trial in search["trials"] if trial["number"]==search["best_trial"])
+    report.p(f"Trials completed: {len(search['trials'])}. The first three were startup proposals and the final three were guided by TPE. The winning search parameters came from trial {search['best_trial']}: {escape(json.dumps(best['parameters'],sort_keys=True))}.","SmallText")
+    rows=[["Variant","Train Top-1","Mean CV Top-1","Mean CV Macro F1","Student Top-1","Student Macro F1","Student log loss","Student scoring (s)"]]
+    for row in evidence["rows"]:
+        rows.append([row["variant"],percentage(row["train_top1"]),percentage(row["cv_top1"]),number(row["cv_macro_f1"]),
+                     percentage(row["student_top1"]),number(row["student_macro_f1"]),number(row["student_log_loss"]),
+                     number(row["student_inference_seconds"],3)])
+    report.table(rows,[65,80,90,108,90,100,94,98])
+    untuned,tuned=evidence["rows"]
+    report.p(f"Bayesian tuning changed held-out Top-1 by {(tuned['cv_top1']-untuned['cv_top1'])*100:+.2f} percentage points and student Top-1 by {(tuned['student_top1']-untuned['student_top1'])*100:+.2f} percentage points. CV Macro F1 changed by {tuned['cv_macro_f1']-untuned['cv_macro_f1']:+.4f}. Student Macro F1 changed by {tuned['student_macro_f1']-untuned['student_macro_f1']:+.4f}, log loss by {tuned['student_log_loss']-untuned['student_log_loss']:+.4f}, and total classifier scoring time by {tuned['student_inference_seconds']-untuned['student_inference_seconds']:+.3f} seconds. The TPE objective selected the configuration from the training folds.")
+    report.p("Macro F1 and log loss use valid candidate rows. Top-1 uses every observation. Student inference time covers candidate scoring and per-observation Top-1 selection across the ten trips; graph loading, feature extraction, and decoding are excluded.", "SmallText")
+
+
+def add_decoder_comparison(report,evidence):
+    report.page()
+    report.subheading("Active model - effect of HMM and Viterbi on the student-test set")
+    report.p("The active model combines the two boosters' probabilities with equal weights in log space. Its emissions also penalize GPS distance. Viterbi keeps up to eight states per fix and combines the emissions with directed distance, speed and U-turn costs. The route is reconstructed from feasible directed transitions.")
+    names={"new_booster":"Full-route booster alone","boosting_blend":"Two boosters, per-fix selection","blend_hmm":"Two boosters + HMM / Viterbi"}
+    rows=[["Method","Observation Top-1","Correct / observations","Directed continuity","Ordered LCS F1"]]
+    for key,item in evidence["methods"].items():
+        rows.append([names[key],percentage(item["top1_accuracy"]),f"{item['correct']:,} / {item['observations']:,}",
+                     percentage(item["route_continuity"]),number(item["sequence_lcs_f1"])])
+    report.table(rows,[250,115,125,120,115])
+    rows=[["Student-testing trip","Blend Top-1","Decoded Top-1","Top-1 change (pp)","Blend LCS F1","Decoded LCS F1"]]
+    for row in evidence["trips"]:
+        rows.append([row["trip_id"],percentage(row["blend_top1"]),percentage(row["decoded_top1"]),
+                     f"{100*row['top1_difference']:+.2f}",number(row["blend_lcs_f1"]),number(row["decoded_lcs_f1"])])
+    report.table(rows,[125,100,100,135,130,135],padding=3)
+    methods=evidence["methods"]
+    raw,decoded=methods["boosting_blend"],methods["blend_hmm"]
+    better=[row["trip_id"] for row in evidence["trips"] if row["top1_difference"]>0]
+    worse=[row["trip_id"] for row in evidence["trips"] if row["top1_difference"]<0]
+    report.p(f"Compared with the same blend scored independently per fix, decoding changed Top-1 by {(decoded['top1_accuracy']-raw['top1_accuracy'])*100:+.2f} percentage points and ordered LCS F1 by {decoded['sequence_lcs_f1']-raw['sequence_lcs_f1']:+.4f}. Point accuracy improved on {len(better)} trips and decreased on {len(worse)}. The decoder was selected on out-of-fold training routes. This experiment uses all 19,160 student-test observations.", "SmallText")
 
 
 def build_report():
@@ -381,6 +415,10 @@ def build_report():
     refinement=load_refinement_evidence()
     route_records={name:load_json(ROUTE_RESULTS/f"{name}.json",False) for name in
                    ("student_test","decoder_selection","grouped_comparison","api_integration")}
+    active_api=route_records["api_integration"] or api
+    live_path=ROUTE_RESULTS if route_records["api_integration"] is not None else RESULTS
+    tuning_comparison=load_json(REFINEMENT_RESULTS/"boost_tuning_comparison.json",False)
+    active_decoder_comparison=load_json(ROUTE_RESULTS/"classifier_decoder_comparison.json",False)
     has_route_results=all(route_records[name] is not None for name in
                           ("student_test","decoder_selection","grouped_comparison"))
     make_comparison_plots(models,tuning,hmm)
@@ -406,9 +444,9 @@ def build_report():
     if has_route_results:
         row=route_records["student_test"]["hmm"]
         r.p(f"Section 9 compares the full-route alignment results under both reference-label methods. The selected run reached {percentage(row['top1_accuracy'])} on full-route labels, {percentage(row['legacy_top1_accuracy'])} on earlier labels, and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])}.")
-    if api and api.get("requests"):
-        passed=sum(request.get("http_status")==200 for request in api["requests"])
-        r.p(f"The original artifact's local HTTP check returned {passed} successful predictions from {len(api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
+    if active_api and active_api.get("requests"):
+        passed=sum(request.get("http_status")==200 for request in active_api["requests"])
+        r.p(f"The recorded live HTTP check returned {passed} successful predictions from {len(active_api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
     r.p("Pointwise accuracy uses approximate labels derived from the supplied chronological route sequences. The sequence and continuity metrics are project diagnostics.")
     r.p("AI assisted implementation, debugging and evidence compilation. The team must verify the implementation, interpret results independently and disclose the assistance according to the event policy.")
     r.page();r.heading("2.2 Dataset Understanding and EDA")
@@ -474,11 +512,11 @@ def build_report():
     spaces={"GaussianNB":"var_smoothing: log-uniform [1e-12, 1e-4]", "LogisticRegression":"C: log-uniform [0.005, 20]", "DecisionTree":"max_depth: integer [7,20]; min_samples_leaf: log-integer [5,80]; ccp_alpha: log-uniform [1e-7,1e-3]", "ExtraTrees":"n_estimators: [40,96] step 8; max_depth: integer [10,22]; min_samples_leaf: log-integer [3,35]; max_features: uniform [0.5,1]", "HistGradientBoosting":"max_iter: [60,140] step 20; max_leaf_nodes: categorical {7,15,31}; learning_rate: log-uniform [0.04,0.2]; l2_regularization: log-uniform [0.1,20]; min_samples_leaf: [20,80] step 10"}
     r.p(f"<b>Search space:</b> {escape(spaces.get(tuning['selected_model'],'See scripts/tune.py'))}. The small model-specific space targets complexity and regularization under the measured CPU budget.")
     r.p(f"<b>Best executed parameters:</b> {escape(json.dumps(tuning['best_params'],sort_keys=True))}; best search objective = {number(tuning['best_objective'])}.")
-    rows=[["Version","CV Macro F1","CV fold-mean Top-1","Student Top-1","Student Macro F1","Student log loss","Scoring seconds"]]
+    rows=[["Version","Train Top-1","CV Macro F1","CV fold-mean Top-1","Student Top-1","Student Macro F1","Student log loss","Scoring seconds"]]
     for key in ("untuned","tuned"):
         m=tuning[key];cv=m["cv"]["metrics"];test=m["student_test"]
-        rows.append([key,number(cv["macro_f1"]),number(cv["fold_mean_top1"]),number(test["top1_accuracy"]),number(test["macro_f1"]),number(test["log_loss"]),number(m["inference_seconds"],3)])
-    r.table(rows,[75,95,120,100,100,100,95])
+        rows.append([key,percentage(m["training_metrics"]["top1_accuracy"]),number(cv["macro_f1"]),number(cv["fold_mean_top1"]),number(test["top1_accuracy"]),number(test["macro_f1"]),number(test["log_loss"]),number(m["inference_seconds"],3)])
+    r.table(rows,[75,85,85,110,90,95,95,90])
     r.p(f"<b>Final artifact tag:</b> {escape(tuning['final_tag'])}; tuned configuration selected: {str(tuning['used_tuned_model']).lower()}. {escape(tuning['rationale'])} Tuned and untuned scores use identical data partitions and metric definitions.")
     r.image(FIGURES/"tuned_vs_untuned.png",max_height=220)
     r.page();r.subheading("Executed Bayesian search history")
@@ -488,6 +526,8 @@ def build_report():
     r.table(rows,[40,90,60,85,65,345])
     r.image(FIGURES/"optuna_trials.png",max_height=220)
     r.p("Source records: results/optuna.sqlite3, results/optuna_trials.csv and results/tuning_trials/. Startup proposals are random; later guided_TPE proposals are supplied by TPE. No executed search result has been replaced by a fabricated curve.","SmallText")
+    if tuning_comparison is not None:
+        add_boost_comparison(r,tuning_comparison, refinement["boost_tuning"])
     r.page();r.heading("5. HMM and Viterbi Route Reconstruction")
     r.p("Hidden states are candidate directed arcs and projected positions along them. Emissions are clamped positive-class classifier scores normalized within each observation and used as log potentials. They are discriminative scores, not independently calibrated probabilities of final-route correctness.")
     r.p("The transition score penalizes disagreement between directed network distance and GPS displacement, with an additional implausible-speed penalty. For different arcs, distance includes the remaining source arc, a directed node path, and the destination prefix. Forward movement on the same arc uses direct fractional distance; backward movement requires a feasible directed loop. Impossible transitions receive negative infinity.")
@@ -515,40 +555,47 @@ def build_report():
         for w in h.get('warnings',[]):
             name=w.get('reason','unspecified');reasons[name]=reasons.get(name,0)+1
     r.table([["Recorded warning reason","Count"]]+[[k,v] for k,v in sorted(reasons.items())],[500,185])
+    if active_decoder_comparison is not None:
+        add_decoder_comparison(r,active_decoder_comparison)
     r.page();r.heading("6. Geographical Visualisation Using Folium")
-    meta=load_json(RESULTS/"eda"/"representative_map_metadata.json",False) or {}
-    r.p(f"The committed interactive map is results/eda/representative_map.html, generated from actual permitted student-test trip {escape(str(meta.get('trip_id','recorded in metadata')))}. Blue markers show GPS, grey lines show road geometry, orange shows the supplied reference, and teal shows predictions when available. Layer controls and labels allow comparison. No reference layer is returned to the evaluator UI.")
-    folium_shot=RESULTS/"screenshots"/"folium_map.png"
-    r.image(folium_shot if folium_shot.exists() else RESULTS/"eda"/"representative_geographical_view.png",max_height=365)
-    r.p("The image above is an actual rendered Folium view when a screenshot exists; otherwise it is a generated geographical export from the same measured geometry. Prediction-layer availability is recorded in representative_map_metadata.json. The HTML and map-generation code are included.","SmallText")
+    map_path=ROUTE_RESULTS/"map"
+    active_map=(map_path/"representative_map_metadata.json").is_file()
+    if not active_map: map_path=RESULTS/"eda"
+    meta=load_json(map_path/"representative_map_metadata.json",False) or {}
+    map_html=(map_path/"representative_map.html").relative_to(ROOT).as_posix()
+    r.p(f"The committed interactive map is {escape(map_html)}. It shows student-test trip {escape(str(meta.get('trip_id','recorded in metadata')))}. Blue markers show GPS, grey lines show road geometry, orange shows the supplied reference, and teal shows predicted roads. Layer controls and labels allow comparison. The reference layer appears only in this development map.")
+    folium_shot=(map_path if active_map else RESULTS/"screenshots")/"folium_map.png"
+    r.image(folium_shot if folium_shot.is_file() else map_path/"representative_geographical_view.png",max_height=365)
+    r.p("The image shows the interactive Folium map when a rendered screenshot is available. The alternative export uses the same measured geometry. The HTML, layers and generation code are included.","SmallText")
     r.page();r.heading("7. API, UI and Deployment")
     r.p("Laptop 1 runs FastAPI with the final artifact, reference-free feature extraction and the decoder. GET /health checks readiness; GET /trips dynamically discovers trips; POST /predict accepts a trip ID and executes inference. Only after inference does the separate server-side evaluator read reference information and produce aggregate metrics. Reference routes and pointwise labels are excluded from the HTTP response.")
     r.p("Laptop 2 serves the plain HTML/CSS/JavaScript evaluator UI. It connects to Laptop 1 over its LAN address, displays raw observations, predicted road geometry, metrics, inference time and warnings. The local canvas map remains functional without external basemap tiles.")
     r.p("Backend command: python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000","CodeSmall")
     r.p("Laptop 2 command: python -m http.server 8800 --directory frontend","CodeSmall")
-    if api:
-        requests=api.get("requests",[])
+    if active_api:
+        requests=active_api.get("requests",[])
         if requests:
             rows=[["Trip","HTTP status","Observations","Inference (s)","HTTP elapsed (s)","Run ID"]]
             for request in requests:
                 rows.append([request["trip_id"],request.get("http_status","N/A"),request.get("observations","N/A"),number(request.get("timing",{}).get("inference_seconds"),2),number(request.get("http_seconds"),2),request.get("run_id","N/A")])
             r.table(rows,[105,95,105,105,115,160],padding=4)
             passed=sum(request.get("http_status")==200 for request in requests)
-            r.p(f"Same-machine integration returned HTTP 200 for {passed} of {len(requests)} requests in {escape(api['partition'])}. See results/api_integration.json and results/execution_logs/actual_api_server.txt.","SmallText")
+            r.p(f"Same-machine integration returned HTTP 200 for {passed} of {len(requests)} requests in {escape(active_api['partition'])}. See {escape(live_path.relative_to(ROOT).as_posix())}/api_integration.json and the recorded receiving logs.","SmallText")
     else:r.p("<b>API verification record pending.</b> No successful API execution is inferred from source code alone.")
     r.p("The physical two-laptop LAN demonstration and receiving-terminal screenshot are pending. See docs/deployment.md for the demonstration procedure.","SmallText")
     r.page();r.subheading("Actual working interface")
-    screenshot=RESULTS/"screenshots"/"ui_desktop.png"
+    screenshot=live_path/"screenshots"/"ui_desktop.png"
     if not screenshot.exists():screenshot=RESULTS/"screenshots"/"ui.png"
     if screenshot.exists():
         r.image(screenshot,max_height=418)
-        if capture:
-            r.p(f"Local browser run {escape(capture['run_id'])} reconstructed student-test trip {escape(capture['trip_id'])} from {capture['observation_count']:,} GPS observations. The separate frontend and API services ran on the same machine.","SmallText")
+        ui_evidence=load_json(live_path/"screenshots"/"capture_metadata.json",False) or capture
+        if ui_evidence:
+            r.p(f"Local browser run {escape(ui_evidence['run_id'])} reconstructed student-test trip {escape(ui_evidence['trip_id'])} from {ui_evidence['observation_count']:,} GPS observations. The separate frontend and API services ran on the same machine.","SmallText")
     else:r.p("Working-UI screenshot pending at generation time.")
-    server=RESULTS/"screenshots"/"api_terminal.png"
+    server=live_path/"screenshots"/"api_terminal.png"
     if server.exists():r.page();r.subheading("Actual API receiving-terminal evidence");r.image(server,max_height=380)
     else:
-        logs=RESULTS/"screenshots"/"server_logs_browser.png"
+        logs=live_path/"screenshots"/"server_logs_browser.png"
         if logs.exists():
             r.page();r.subheading("Actual server logs displayed in the browser")
             r.image(logs,max_height=408)
@@ -580,6 +627,11 @@ def build_report():
         source_files.extend(ROUTE_RESULTS/f"{name}.json" for name,record in route_records.items() if record is not None)
         source_files.extend(path for path in (ROUTE_RESULTS/"screenshots/ui_desktop.png",
                                               ROUTE_RESULTS/"screenshots/capture_metadata.json") if path.is_file())
+    source_files.extend(path for path in (REFINEMENT_RESULTS/"boost_tuning_comparison.json",
+                                          ROUTE_RESULTS/"classifier_decoder_comparison.json",
+                                          map_path/"representative_map_metadata.json",folium_shot,
+                                          live_path/"screenshots"/"server_logs_browser.png",
+                                          live_path/"screenshots"/"capture_metadata.json") if path.is_file())
     manifest={
         "report":target.relative_to(ROOT).as_posix(),
         "generated_ist":now.isoformat(),

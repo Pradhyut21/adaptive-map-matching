@@ -1,0 +1,203 @@
+{
+  "rows": [
+    {
+      "variant": "untuned",
+      "train_top1": 0.7133775075929507,
+      "training_observations": 208417,
+      "cv_top1": 0.6223605059437386,
+      "cv_macro_f1": 0.7984007590233143,
+      "student_top1": 0.7340292275574113,
+      "student_macro_f1": 0.8456409264512934,
+      "student_log_loss": 0.08656159769017252,
+      "student_inference_seconds": 5.362416099997063,
+      "student_observations": 19160
+    },
+    {
+      "variant": "tuned",
+      "train_top1": 0.7350408076116631,
+      "training_observations": 208417,
+      "cv_top1": 0.6260793159903465,
+      "cv_macro_f1": 0.7960713950292608,
+      "student_top1": 0.7371085594989562,
+      "student_macro_f1": 0.8471037090112474,
+      "student_log_loss": 0.08623852507603713,
+      "student_inference_seconds": 6.396970399997372,
+      "student_observations": 19160
+    }
+  ],
+  "parameters": [
+    {
+      "categorical_features": "from_dtype",
+      "class_weight": null,
+      "early_stopping": false,
+      "interaction_cst": null,
+      "l2_regularization": 1.0,
+      "learning_rate": 0.1,
+      "loss": "log_loss",
+      "max_bins": 255,
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_iter": 160,
+      "max_leaf_nodes": 63,
+      "min_samples_leaf": 30,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "random_state": 352,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
+    },
+    {
+      "categorical_features": "from_dtype",
+      "class_weight": null,
+      "early_stopping": false,
+      "interaction_cst": null,
+      "l2_regularization": 0.3603398141798485,
+      "learning_rate": 0.16140369494078055,
+      "loss": "log_loss",
+      "max_bins": 255,
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_iter": 220,
+      "max_leaf_nodes": 63,
+      "min_samples_leaf": 99,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "random_state": 352,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
+    }
+  ],
+  "cv": [
+    {
+      "mean_top1": 0.6223605059437386,
+      "mean_macro_f1": 0.7984007590233143,
+      "folds": [
+        {
+          "top1_accuracy": 0.47960768650423824,
+          "candidate_count": 1267347,
+          "macro_f1": 0.7470410155353122,
+          "precision": 0.7181640969860811,
+          "recall": 0.7869489092625315,
+          "log_loss": 0.1299077010264717,
+          "confusion_matrix": [
+            [
+              1171535,
+              40384
+            ],
+            [
+              21771,
+              33657
+            ]
+          ]
+        },
+        {
+          "top1_accuracy": 0.6905635743816639,
+          "candidate_count": 1198393,
+          "macro_f1": 0.8224751183211775,
+          "precision": 0.7922067148489854,
+          "recall": 0.8615662030053873,
+          "log_loss": 0.10078592517193548,
+          "confusion_matrix": [
+            [
+              1095816,
+              34344
+            ],
+            [
+              16818,
+              51415
+            ]
+          ]
+        },
+        {
+          "top1_accuracy": 0.6969102569453139,
+          "candidate_count": 1182793,
+          "macro_f1": 0.8256861432134532,
+          "precision": 0.7990607988647138,
+          "recall": 0.8588535721168111,
+          "log_loss": 0.10241120192502565,
+          "confusion_matrix": [
+            [
+              1079846,
+              32880
+            ],
+            [
+              17709,
+              52358
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "mean_top1": 0.6260793159903465,
+      "mean_macro_f1": 0.7960713950292608,
+      "folds": [
+        {
+          "top1_accuracy": 0.4833947247740351,
+          "candidate_count": 1267347,
+          "macro_f1": 0.7370255251571477,
+          "precision": 0.7038678032555278,
+          "recall": 0.7868874692877589,
+          "log_loss": 0.13548696386614412,
+          "confusion_matrix": [
+            [
+              1166226,
+              45693
+            ],
+            [
+              21535,
+              33893
+            ]
+          ]
+        },
+        {
+          "top1_accuracy": 0.6942046855733662,
+          "candidate_count": 1198393,
+          "macro_f1": 0.8240549416774301,
+          "precision": 0.7946547135491586,
+          "recall": 0.8616424810831563,
+          "log_loss": 0.1010465326221211,
+          "confusion_matrix": [
+            [
+              1096535,
+              33625
+            ],
+            [
+              16851,
+              51382
+            ]
+          ]
+        },
+        {
+          "top1_accuracy": 0.7006385376236384,
+          "candidate_count": 1182793,
+          "macro_f1": 0.8271337182532048,
+          "precision": 0.8020555943341439,
+          "recall": 0.8578885306124822,
+          "log_loss": 0.10150884252819586,
+          "confusion_matrix": [
+            [
+              1080811,
+              31915
+            ],
+            [
+              17905,
+              52162
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "untuned_refit_seconds": 181.06593839999914,
+  "threads": 3,
+  "timing_scope": "candidate scoring and Top-1 selection across all ten student trips",
+  "reference": "original frozen label method for each metric",
+  "interpretation": "This compares the boosted recipe before and after TPE. The active blend reuses its hyperparameters."
+}

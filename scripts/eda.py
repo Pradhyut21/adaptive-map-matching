@@ -21,8 +21,8 @@ from pathsnap.settings import ROOT, DATA_ROOT, trip_dirs
 OUT = ROOT / "results" / "eda"
 COLORS = {"train":"#087f8c", "student_test":"#cb6c36"}
 
-def _save(fig, name):
-    fig.savefig(OUT / name, dpi=170, bbox_inches="tight", facecolor="white")
+def _save(fig, name, output=OUT):
+    fig.savefig(output / name, dpi=170, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 def inspect_trip(directory, partition):
@@ -106,10 +106,11 @@ def plot_inventory(df):
     ax.set(xlabel="Measured count over permitted partitions",title="Missing / invalid numeric values",xlim=(0,max(values+[1])*1.15))
     _save(fig,"missing_values.png")
 
-def representative_map(trip_dir, predictions=None, route_segments=None):
+def representative_map(trip_dir, predictions=None, route_segments=None, output=OUT, model_version=None):
     """Permitted student-test reference overlay; never served as evaluator UI."""
     from pathsnap.geometry import load_network,load_observations
     import folium
+    output.mkdir(parents=True, exist_ok=True)
     network=load_network(trip_dir)
     track=load_observations(trip_dir)
     xy=network.project(track[:,:2])
@@ -148,7 +149,7 @@ def representative_map(trip_dir, predictions=None, route_segments=None):
     m.get_root().html.add_child(folium.Element(legend))
     m.fit_bounds([[float(lo[1]),float(lo[0])],[float(hi[1]),float(hi[0])]])
     rendered=m.get_root().render()
-    (OUT/"representative_map.html").write_text(
+    (output/"representative_map.html").write_text(
         "\n".join(line.rstrip() for line in rendered.splitlines())+"\n",
         encoding="utf-8",
     )
@@ -163,11 +164,41 @@ def representative_map(trip_dir, predictions=None, route_segments=None):
     ax.autoscale();ax.set_aspect("equal");ax.legend(loc="best")
     ax.set(xlabel="Local easting (km)",ylabel="Local northing (km)",title=f"Student-test trip {Path(trip_dir).name}: road geometry and GPS")
     ax.grid(alpha=.12)
-    _save(fig,"representative_geographical_view.png")
-    (OUT/"representative_map_metadata.json").write_text(json.dumps({"trip_id":Path(trip_dir).name,"partition":"student_test","observations":len(track),"road_arcs_displayed":len(road_ids),"reference_arcs":len(reference),"prediction_layer_included":predictions is not None,"coordinate_system":network.crs.to_string()},indent=2),encoding="utf-8")
+    _save(fig,"representative_geographical_view.png",output)
+    (output/"representative_map_metadata.json").write_text(json.dumps({"trip_id":Path(trip_dir).name,"partition":"student_test","observations":len(track),"road_arcs_displayed":len(road_ids),"reference_arcs":len(reference),"prediction_layer_included":predictions is not None,"coordinate_system":network.crs.to_string(),"model_version":model_version},indent=2),encoding="utf-8")
+
+
+def active_map(data_root, trip_id, screenshot):
+    from pathsnap.refined_inputs import ROUTE_VERSION
+    results = ROOT / "results" / ROUTE_VERSION
+    record = json.loads((results / "student_test.json").read_text(encoding="utf-8"))
+    trip = next((p for p in trip_dirs("student_test", data_root) if p.name == trip_id), None)
+    if trip is None:
+        raise ValueError("The requested trip must be in the permitted student-testing partition")
+    output = results / "map"
+    prediction_path = results / "predictions" / record["selected"] / f"{trip_id}.npz"
+    with np.load(prediction_path, allow_pickle=False) as saved:
+        representative_map(trip, saved["predictions"], [saved["route_arc_ids"].tolist()],
+                           output=output, model_version=ROUTE_VERSION)
+    if screenshot:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as browsers:
+            browser = browsers.chromium.launch()
+            page = browser.new_page(viewport={"width": 1360, "height": 880})
+            page.goto((output / "representative_map.html").resolve().as_uri(), wait_until="load")
+            page.wait_for_selector(".leaflet-overlay-pane svg path", timeout=20000)
+            page.screenshot(path=str(output / "folium_map.png"))
+            browser.close()
+    print(f"Saved Folium map for {trip_id} based on {prediction_path.name}", flush=True)
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument("--data-root",type=Path,default=DATA_ROOT);parser.add_argument("--map-only",action="store_true",help="Refresh representative map with actual saved HMM predictions");args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument("--data-root",type=Path,default=DATA_ROOT);parser.add_argument("--map-only",action="store_true",help="Refresh representative map with actual saved HMM predictions")
+    parser.add_argument("--active-map", metavar="STUDENT_TRIP", help="Export the active model's saved student-trip result")
+    parser.add_argument("--screenshot", action="store_true", help="Render the active Folium map in Chromium")
+    args=parser.parse_args()
+    if args.active_map:
+        active_map(args.data_root, args.active_map, args.screenshot)
+        return
     OUT.mkdir(parents=True,exist_ok=True)
     if args.map_only:
         p=trip_dirs("student_test",args.data_root)[0]

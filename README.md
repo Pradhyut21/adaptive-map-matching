@@ -131,6 +131,17 @@ When the organizers supply the reserved runtime data, set `PATHSNAP_DATA` to its
 
 ## Artifacts
 
+The course submission consists of this public repository and the [consolidated PDF](results/PathSnap_Technical_Report.pdf). The [deliverables checklist](docs/deliverables.md) maps each required section to its evidence.
+
+To regenerate the paired boosting metrics, active-model decoder comparison, interactive map and PDF after reproducing the experiments:
+
+```powershell
+python -m scripts.deliverable_metrics tuning
+python -m scripts.deliverable_metrics decoder
+python -m scripts.eda --active-map 00000052 --screenshot
+python -m scripts.report --render
+```
+
 `artifacts/` holds all five original fitted models, tuned Extra Trees, and the active refined boosting model with its decoder configuration. `results/` holds grouped-fold records, predictions for all ten permitted student trips, optimization trials, comparison tables, plots and the consolidated PDF. Refinement evidence is under `results/context-boost-v1/`. `results/eda/representative_map.html` shows the original HMM example. `STATUS.md` records completed work and pending evidence.
 
 Optional screenshot verification uses `python -m pip install playwright`, `python -m playwright install chromium`, then `python -m scripts.capture_ui` against the running server. `python -m scripts.report` creates the consolidated PDF from completed result files. Never manufacture missing screenshots, losses or results.
