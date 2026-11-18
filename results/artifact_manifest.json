@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-18T11:23:35.986767+00:00",
+  "generated_utc": "2026-11-18T11:39:40.146804+00:00",
   "hashing": "SHA-256 of each file as stored in the submission ZIP.",
   "files": {
     ".gitattributes": {
@@ -87,32 +87,32 @@
       "sha256": "6a336bf5cdd5e0f9513b3c8530b93359d4fdfdc89a8f080864cbcbe0a6c90036"
     },
     "docs/current_repo_review.md": {
-      "bytes": 4694,
-      "sha256": "479e4bfeccdc992fb03d3e9c8b5f9959dc97bc6b3054184dd56f43c697f7f612"
+      "bytes": 4413,
+      "sha256": "db425ca1192d77071c0c9df580c5f56751f599fb9be5e436862d67d55e234152"
     },
     "docs/decoder.md": {
-      "bytes": 5404,
-      "sha256": "38dabf04147c895dc5f92b1006e57e31bf7987fa6a6a8906e45b65a702a90844"
+      "bytes": 5604,
+      "sha256": "f4246df05f6afbb8b3aca6196963a8cf8b28bde8ad33219fcb8ecc65d51b5193"
     },
     "docs/deliverables.md": {
-      "bytes": 3747,
-      "sha256": "00d6a65d3c317c64a7d5b5848b416e7c21a94660365151c95401a0b2a9144cd2"
+      "bytes": 3943,
+      "sha256": "6d0a839f0cde223fc618ef9008167242e210e6a43089b00696047fcd6146f94e"
     },
     "docs/deployment.md": {
-      "bytes": 4386,
-      "sha256": "96963fb7fa285ea29bc6b0d5de92aba0386901ac4e9d5a38838549e4e848e972"
+      "bytes": 4838,
+      "sha256": "9f1c0151d0895ffac965c45d80ed20d535b4047cbbbaf5969191bc7123dfd033"
     },
     "docs/model_notes.md": {
-      "bytes": 2425,
-      "sha256": "6b7b83fbcdf0c7ce7448ee5e737780e1655c466ea1e9ab19364e7ed40121c3a1"
+      "bytes": 4197,
+      "sha256": "4a5eb91df86a2c516854e3403e5a4ffe1ad4048664d7d0c807782776bc378aa5"
     },
     "docs/peer_approach.md": {
-      "bytes": 3353,
-      "sha256": "4dd1ec506a79020aa57845b93a19dd09972ae934a4fa74d4a6b73e6daafe78ac"
+      "bytes": 3665,
+      "sha256": "366e15e3a6fba3127fb11cace50503b52c9b7b94d13ada5afcbe0608f88f9169"
     },
     "docs/VIVA.md": {
-      "bytes": 4318,
-      "sha256": "012137eade0655aec81ef4be271b10fab4b993e52207f5e19f640909d1e453e5"
+      "bytes": 5042,
+      "sha256": "f23c107e05ac7c9ccc26b661c05e3d3fc41293477678348b1e5c9af94b085481"
     },
     "frontend/app.js": {
       "bytes": 18111,
@@ -195,8 +195,8 @@
       "sha256": "b14b6acba8e9b5e851144d48100ac2d360e3626f6812fb6fd7b53b9761760ada"
     },
     "README.md": {
-      "bytes": 16333,
-      "sha256": "bb9051d4d1ddfc0214ebb4feb448f9aaf62bacc0d7a36880103f997d1f5930d7"
+      "bytes": 16939,
+      "sha256": "da36876abc6924cc88413477d3f89da415e733d9102a6f85165dac3b1e515b11"
     },
     "requirements-dev.txt": {
       "bytes": 39,
@@ -217,6 +217,10 @@
     "results/api_integration.json": {
       "bytes": 17342,
       "sha256": "ce1e346cbd558f587659a1e420316013ad91cff9ea0a049ddf372d124f28e7bb"
+    },
+    "results/baseline_model_comparison.csv": {
+      "bytes": 1356,
+      "sha256": "993e054af869e781eeb1f21720a22a3db874b2adfb0ce4f7b3fe47cab31452f0"
     },
     "results/candidate_radius_experiment.json": {
       "bytes": 456,
@@ -522,6 +526,10 @@
       "bytes": 62569,
       "sha256": "c8fd4646aac5fae6c2419585043e31aaf7edd77ee114c0f86c25460acf348a96"
     },
+    "results/figures/current_pipeline_comparison.png": {
+      "bytes": 55429,
+      "sha256": "8747b35a53b7748380ebd54591ce33b7415cd3b7ee4542225242d1856d4d172a"
+    },
     "results/figures/cv_macro_f1.png": {
       "bytes": 44935,
       "sha256": "05830eb41da5b0e044ecdabe97b2c93e9954bb14880e77c917d29a3ae72f8bd1"
@@ -546,9 +554,25 @@
       "bytes": 29100,
       "sha256": "17f64711ee9fdb69ad3e76bd69beadc24511f24ab6916f9daf05e1595c597758"
     },
+    "results/final_evaluation_summary.json": {
+      "bytes": 492,
+      "sha256": "27680ad1f403f5421a4111282547644e31c8c5616d31c3879194da77e42d1a94"
+    },
+    "results/final_model_summary.json": {
+      "bytes": 2896,
+      "sha256": "cf50db32a46b76a0071bc513c38af120088c3ced7c6800d0133127712d3f6fd9"
+    },
     "results/gps-noise-v1/api_integration.json": {
       "bytes": 18548,
       "sha256": "bbf75947c48c1854dd1a9404128987e00e0dc408272dc17342187605b6f955d9"
+    },
+    "results/gps-noise-v1/classifier_decoder_comparison.csv": {
+      "bytes": 1584,
+      "sha256": "6bb5f66446d8f0a0df92c5bc4cda8ad2e5dff6832b3bc6146ed78f714e95ca7a"
+    },
+    "results/gps-noise-v1/classifier_decoder_comparison.json": {
+      "bytes": 36854,
+      "sha256": "729e45c7a54a23272f925e3b76a677e5828296e0bd0a690df74fd09aed3a1457"
     },
     "results/gps-noise-v1/execution_logs/actual_student_api_server.txt": {
       "bytes": 4361,
@@ -703,8 +727,8 @@
       "sha256": "221e62edd4b7d870841546d1e4adf7b7198e3b3c0757f985b2f0c0c2492146ee"
     },
     "results/model_comparison.csv": {
-      "bytes": 1356,
-      "sha256": "368a9d020ec52624a2a37a6580c30010fdeb6f50d98fa6ba108e7be708abebdc"
+      "bytes": 5350,
+      "sha256": "0fa5e86c0e60a8088f496549361247a3e4883ffd844ab99d6f6a1d6fac9732ef"
     },
     "results/model_comparison.json": {
       "bytes": 185088,
@@ -747,8 +771,8 @@
       "sha256": "1381e478157681d850781e606a23c222f1a95d492e665471bd2353754d81e965"
     },
     "results/PathSnap_Technical_Report.pdf": {
-      "bytes": 1708927,
-      "sha256": "a4d7ea304bf51db56a594d5a97b21ae70bbb5e3f52a113fcfd00eabfdc44b58b"
+      "bytes": 1793432,
+      "sha256": "da521230386caef12b6536242b95661fe7cc99375b224c6e8565581622398f87"
     },
     "results/predictions/DecisionTree/00000000.npz": {
       "bytes": 20894,
@@ -1111,8 +1135,8 @@
       "sha256": "46462c0c12eda80a96d8db77b350e59899fedd650e0bc3d56c502960d3c551d1"
     },
     "results/report_manifest.json": {
-      "bytes": 4807,
-      "sha256": "b9ef3ded17e5a67bc235f5a9c6caed6d80fabfa5526ee7e55c2e47e2ba03d35d"
+      "bytes": 5276,
+      "sha256": "67f6cf71a3d383323bb7ac3f489e7bd6e69b0e4d6d86eae704f2a7b7174fb5da"
     },
     "results/route-context-v1/api_integration.json": {
       "bytes": 18525,
@@ -1410,13 +1434,17 @@
       "bytes": 20948,
       "sha256": "c6739ed969a3422edcf634653ff1e3f86f5b02911b75b02bb7ef4a75a887a6ef"
     },
+    "scripts/refresh_results.py": {
+      "bytes": 14369,
+      "sha256": "1299f0d991cdd777f0acc397f342048822b15541783b3b39d546b532326f9873"
+    },
     "scripts/report.py": {
-      "bytes": 66729,
-      "sha256": "f4436df58ff0bb2dc5abb62761f14b5f52d968dbe56c6ee49a3249a00d1185fc"
+      "bytes": 71684,
+      "sha256": "6bb428af64b37046e4c465e605e900b8a2055c6123e232ba0f7b624d4823a2ac"
     },
     "scripts/train.py": {
-      "bytes": 8273,
-      "sha256": "b55635fb3f56fd4491b2b7f694380d2918596790c0446063dc1c9f03d7bb2627"
+      "bytes": 8568,
+      "sha256": "4a08fcdda72e22a5ae6086eabcbf214f03295f41c2df56fdbabd0a4246fadaf3"
     },
     "scripts/tune.py": {
       "bytes": 4746,
@@ -1431,8 +1459,8 @@
       "sha256": "0f59f1ca15c5acd8a29740970e4377612839278af1aabf750c9e4ab29cb9e3b5"
     },
     "STATUS.md": {
-      "bytes": 6957,
-      "sha256": "d8763a7167ce5d2aa6a7a4af8d3fcb235c528e56899ea71ba6595d9a77607bc2"
+      "bytes": 3643,
+      "sha256": "3c91fd9fa7ed9c8e591052a9a52389b89f37dd74b2ceef237ac8db333693251f"
     },
     "tests/test_api.py": {
       "bytes": 8077,

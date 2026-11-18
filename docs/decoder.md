@@ -18,7 +18,9 @@ See [training selection](../results/gps-noise-v1/training_validation.json) and
 ## State, scores and recurrence
 
 Each candidate state contains an arc ID and a projected fraction along that arc.
-The selected classifier supplies a positive-class score for each valid candidate.
+The two boosting components supply positive scores for each valid candidate.
+Their equal geometric blend is temperature-scaled, combined with a Gaussian
+GPS-distance prior, and reduced to eight candidate states per observation.
 Scores are clipped to `[1e-8, 1]`, normalised within each observation, and logged.
 These are discriminative emission potentials; normalisation does not establish
 calibrated probability that a route is physically correct.
@@ -28,6 +30,7 @@ distance `d`, the implemented transition score is
 
 ```text
 -abs(d - g) / beta - speed_penalty_weight * max(d / (dt * max_speed) - 1, 0)^2
+    - uturn_penalty * is_direct_reverse_arc_transition
 ```
 
 The log-space recurrence takes the largest predecessor score plus the transition,
@@ -38,8 +41,8 @@ changing the selected sequence.
 For different arcs the network distance is the remaining length on the first arc,
 a directed shortest path from its end node to the next arc's start node, and the
 travelled fraction on the next arc. Forward movement on the same arc uses its
-fraction difference directly. Apparent backward motion on that arc requires a
-real directed loop; graph direction is never silently reversed. Zero-length arcs
+fraction difference directly. Backward projection shifts within the current
+15 m tolerance represent GPS jitter. Larger shifts require a directed loop. Zero-length arcs
 have zero same-arc displacement.
 
 ## Routing cost and cache
@@ -57,9 +60,9 @@ min(max_route_m,
     max(min_route_m, 3 * GPS_displacement + route_slack_m, 2 * max_speed * dt))
 ```
 
-Default bounds are 200 to 5,000 metres, `beta=30 m`, speed scale `55 m/s`, and gap
-threshold `60 s`. These are documented initial engineering choices, not official
-evaluator rules or claimed optimum settings. Sparse searches are grouped into
+Routing bounds are 200 to 5,000 metres, speed scale `55 m/s`, and gap threshold
+`60 s`. The current setting uses `beta=10 m` and a U-turn penalty of 4. The original
+decoder default was `beta=30 m`. Sparse searches are grouped into
 250-metre cache buckets, but each returned transition still respects its exact
 requested distance bound.
 

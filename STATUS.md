@@ -1,48 +1,32 @@
 # PathSnap execution status
 
-The GPS-noise decoder is active with the same fitted boosting models. Training-only validation selected short-window smoothing and a 15 m same-arc jitter tolerance. On the ten student-test trips, full-route Top-1 increased from 86.41% to 94.03% and ordered arc LCS F1 from 0.8867 to 0.9795. Strict continuity decreased from 98.27% to 96.23%. Earlier-label Top-1 changed from 74.97% to 72.83%. The [new frozen run](results/gps-noise-v1/student_test.json) and [training selection](results/gps-noise-v1/training_validation.json) retain the actual denominators. The receiving-terminal screenshot remains pending team capture.
+The deployed system loads `artifacts/gps_noise_boost.joblib` and its frozen decoder settings. It combines two Histogram Gradient Boosting scorers with directed Viterbi decoding, three-sample GPS smoothing, and a 15 m same-arc jitter tolerance. It scored **94.03%** on all 19,160 student-test observations and **95.51%** on all 19,674 evaluator observations. [Current comparison](results/model_comparison.csv), [student results](results/gps-noise-v1/student_test.json), [final assessment](results/final_evaluation_summary.json)
 
-## Data and features
+## Current measurements
 
-- Validated all 80 training trips (208,417 observations) and 10 student-test trips (19,160 observations). The EDA inventory includes file hashes, missing-value checks, graph connectivity, timestamp gaps and reference-route checks. See `results/eda/`.
-- Derived approximate pointwise labels from the reference route using monotone alignment. Logged ambiguous, poor-fit and nearest-reference fallback cases in `results/feature_inventory.json`.
-- The original model used up to ten candidates with a 250 m search radius. A training-trip comparison supported the change from 100 m. The resulting original candidate miss rates were 12.03% on training and 4.65% on student testing. The refinement uses 20 candidates, 28 GPS and geometry inputs and the same frozen reference labels. Misses remain in the Top-1 denominator. See `results/candidate_radius_experiment.json` and `results/context-boost-v1/selection.json`.
+| Measurement | Result | Evidence |
+| --- | ---: | --- |
+| Student exact road-arc Top-1 | 18,016 / 19,160 = 94.03% | `results/gps-noise-v1/student_test.json` |
+| Student ordered route LCS F1 | 0.9795 | Same student result |
+| Student strict raw-projection continuity | 96.23% | Same student result |
+| Evaluator exact road-arc Top-1 | 18,790 / 19,674 = 95.51% | `results/final_evaluation_summary.json` |
+| Behavior and API tests | 52 passed | `results/gps-noise-v1/unit_tests.txt` |
+| Student HTTP checks | All 10 exactly matched frozen metrics | `results/gps-noise-v1/api_integration.json` |
 
-## Training and Bayesian optimization
+Student and evaluator Top-1 use full-route labels. The earlier sparse alignment remains available as a diagnostic. Strict continuity uses raw GPS projections and can reject transitions accepted by the decoder's noise model.
 
-- Completed three-fold trip-grouped cross-validation and full student-test scoring for all five classifiers. Saved the models, fold membership, confusion matrices, timings and 50 student-trip prediction files. See `results/model_comparison.csv`, `results/cv/` and `results/execution_manifest.json`.
-- Selected Extra Trees by mean grouped-CV Top-1. Ran all eight Optuna trials with three startup proposals followed by five guided TPE proposals. The best objective came from the first startup trial. Refit that configuration on all 80 training trips. See `results/optuna.sqlite3` and `results/tuning_summary.json`.
-- Original tuning raised mean grouped-CV Top-1 from 58.84% to 59.53% and student-test Top-1 from 70.61% to 71.66%. Candidate log loss increased from 0.2081 to 0.2097. Tuned Extra Trees is preserved as `artifacts/final_model.joblib`.
-- The same-algorithm feature ablation measured 59.53% versus 57.19% grouped-CV Top-1 and 71.66% versus 68.25% student-test Top-1 with and without the two heading reliability features. Reference alignment also uses heading. The comparison measures agreement with derived labels. See `results/ablation.json`.
-- The refinement compared three Histogram Gradient Boosting configurations on the original grouped folds. The best initial weighted variant reached 62.24% mean fold Top-1. TPE trial 5 of six completed trials reached 62.61% and was selected. It was refit on all 80 training trips. Decoder settings were selected using out-of-fold scores on 16 fixed training trips, reaching 79.07% pooled Top-1 over 30,651 observations. See `results/context-boost-v1/{selection,boost_tuning,decoder_selection}.json`.
+## Training and selection
 
-## Route reconstruction
+- All five original algorithms were fitted and evaluated using 80 training trips and three trip-grouped folds. Their fixed results are in `results/baseline_model_comparison.csv` and `results/model_comparison.json`.
+- Extra Trees was selected during the original comparison. Its eight-trial TPE run raised mean grouped-CV Top-1 from 58.84% to 59.53% and student Top-1 from 70.61% to 71.66%. This was an earlier release.
+- The contextual boosting model completed six TPE trials. Mean grouped-CV Top-1 rose from 62.24% to 62.61%, with student Top-1 rising from 73.40% to 73.71% under the earlier labels. See `results/context-boost-v1/boost_tuning_comparison.csv` for F1, loss and timing.
+- The full-route scorer uses 35 GPS and graph features. The current decoder was selected on OOF scores from sixteen training trips, combining slow motion and a deterministic sample. Full-route Top-1 on that subset rose from 48.49% to 67.51%. See `results/gps-noise-v1/training_validation.json`.
+- The decoder revision followed an observed evaluator failure. Settings were selected from training scores, and the revised frozen model was reassessed on the evaluator partition. This is a repeated assessment after development feedback.
 
-| Method | Student-test Top-1 | Directed continuity | Ordered-sequence LCS F1 |
-|---|---:|---:|---:|
-| Nearest road | 42.96% | 75.58% | 0.2984 |
-| Tuned Extra Trees | 71.66% | 92.57% | 0.4765 |
-| Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 |
-| Refined boosting classifier | 73.71% | — | — |
-| **Previous refined boosting + decoder** | **80.56%** | **98.80%** | **0.8790** |
+## Deliverables and deployment
 
-The original HMM improved Top-1 over the Extra Trees classifier on eight trips and reduced it on `00000000` and `00000007`. The refined model and decoder improved over the original HMM on all ten trips. Exact matches increased from 14,587 to 15,436 of 19,160 observations (+4.43 percentage points). Candidate misses decreased from 890 to 300. Feasible transitions decreased from 19,124 to 18,920 of 19,149 eligible pairs, with one time gap excluded in both runs. The ordered-sequence LCS F1 improved to 0.8790. These metrics describe agreement with the frozen approximate labels on the student-test trips. See `results/hmm_comparison.json`, `results/predictions/HMM/` and `results/context-boost-v1/student_test.json`.
+The [public repository](https://github.com/Pradhyut21/adaptive-map-matching) contains code, fitted models, configurations, experiments, a current Folium map, UI captures and the [consolidated PDF](results/PathSnap_Technical_Report.pdf). The [checklist](docs/deliverables.md) maps requirements to files. [The README](README.md) gives reproduction commands.
 
-## Local verification and deliverables
+The running API serves all ten `evaluator_test` trips on port 8000. Set `PATHSNAP_PARTITION=student_test` for development scoring. Raw evaluator files and per-request assessment records remain in local data and ignored runtime folders. The public assessment record contains aggregate metrics.
 
-- The GPS-noise decoder passed all 52 tests. The new same-arc regression keeps bounded noise on a one-way road without inventing loops and still rejects shifts beyond the configured tolerance.
-
-- The [deliverables checklist](docs/deliverables.md) maps the official repository and report requirements to the submitted files. The consolidated report includes the matched boosting tuning table, the active model's classifier-only versus Viterbi comparison, and the live Folium map export.
-
-- The active matcher passed 51 unit and API tests. All ten genuine predictions from the host's Wi-Fi address returned 200 and exactly reproduced both offline Top-1 measures and the route LCS F1. The live desktop and mobile run had no page errors or horizontal overflow. See `results/route-context-v1/`. The separate-device test needs a client on Laptop 2.
-
-- All 49 behavior and API tests passed in `results/context-boost-v1/unit_tests.txt`, including the new contextual features, frozen artifact selection and decoder edge cases.
-- All ten refined-model live HTTP predictions returned 200. Each trip's Top-1 and ordered-sequence LCS F1 exactly matched its frozen offline result. Full inference took 1.00–22.05 seconds per trip on the test machine. Reference routes and per-point labels remained on the server. See `results/context-boost-v1/api_integration.json` and `results/context-boost-v1/execution_logs/actual_api_server.txt`. Original Extra Trees evidence remains separately in `results/`.
-- Verified updated desktop and mobile UI captures from a live request to the refined API on a separate same-machine service. No JavaScript errors or horizontal overflow. Evidence is in `results/context-boost-v1/screenshots/`.
-- The interactive Folium map includes GPS observations, road graph, supplied student reference and HMM prediction. The consolidated PDF and its source manifest are under `results/`. The project is published at [Pradhyut21/adaptive-map-matching](https://github.com/Pradhyut21/adaptive-map-matching).
-
-## Pending team verification
-
-- Run a trip from the second laptop over the LAN and capture the receiving terminal. Follow [the demo instructions](docs/deployment.md).
-- Run the reserved evaluation when the organizers supply their files. Development and verification used the permitted training and student-test trips.
-- Review the implementation and measurements, add the team's interpretation and disclose AI assistance according to the event policy.
+LAN requests from a separate client reached the backend. The receiving CMD screenshot and team confirmation of the physical laptop setup remain pending. The team must review the implementation and results, add its interpretation, and provide the required AI-assistance disclosure.

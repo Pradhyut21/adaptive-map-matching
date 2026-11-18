@@ -9,12 +9,15 @@ From the project root, install dependencies and set the permitted dataset locati
 ```powershell
 python -m pip install -r requirements-executed.txt
 $env:PATHSNAP_DATA = 'D:\path\to\Student folder'
+$env:PATHSNAP_PARTITION = 'evaluator_test'
 python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 Find Laptop 1's Wi-Fi or Ethernet IPv4 address using `ipconfig`, for example `192.168.1.10`. Both laptops must be on the same accessible LAN. If Windows prompts about Python's network access, allow the intended private network according to your institution's rules. This project does not alter firewall settings automatically.
 
 Verify `http://127.0.0.1:8000/health` on Laptop 1. Leave its terminal visible during evaluation: actual `POST /predict` requests must appear in its logs.
+
+The current deployment reports `deployment_version=gps-noise-v1` and discovers ten evaluator trips. Install the supplied `evaluator_test` folder under the dataset root before using this command. Set `PATHSNAP_PARTITION=student_test` to run the permitted development partition. The active model and settings are selected by `artifacts/active_model.json`.
 
 ## Laptop 2: evaluator UI
 
@@ -42,14 +45,14 @@ For a same-laptop integration check, serve the UI on port 8800 and use API addre
 
 ## Actual demonstration evidence
 
-**Second-laptop LAN demonstration: PENDING until performed with the team's second device.**
+Requests from a separate LAN client reached the current backend. The receiving CMD screenshot and team confirmation of the physical two-laptop setup remain pending.
 
 During that demonstration, capture the actual Laptop 2 UI showing a completed trip and Laptop 1's terminal showing the receiving API requests. Record the time, trip, API address and response run ID. Keep screenshots with the experiment evidence and update `STATUS.md` only after the demonstration occurs. Do not substitute generated terminal images or a same-machine test for two-device evidence.
 
-On Laptop 1, start Uvicorn in a visible Command Prompt using the command above. If the current local service is already writing `results/route_live_server.log`, open Command Prompt in the project directory and follow the receiving log there:
+On Laptop 1, start Uvicorn in a visible Command Prompt using the command above. The existing session writes `results/evaluator_noise_runtime.log`. To show that receiving log in Command Prompt from the project directory, run:
 
 ```cmd
-powershell -NoProfile -Command "Get-Content -LiteralPath 'results/route_live_server.log' -Tail 12 -Wait"
+powershell -NoProfile -Command "Get-Content -LiteralPath 'results/evaluator_noise_runtime.log' -Tail 12 -Wait"
 ```
 
-Run a trip from Laptop 2. Capture the CMD window after it shows the matching run ID, request, and HTTP 200. Save the real terminal capture as `results/route-context-v1/screenshots/api_terminal.png` so the consolidated report can include it. Keep the Laptop 2 UI capture and the run ID with the evidence. Run `python -m scripts.report --render` after adding the screenshot.
+Run a trip from Laptop 2. Capture the CMD window after it shows the matching run ID, request, and HTTP 200. Save the real terminal capture as `results/gps-noise-v1/screenshots/api_terminal.png` so the consolidated report can include it. Keep the Laptop 2 UI capture and run ID with the evidence. Run `python -m scripts.report --render` after adding the screenshot.

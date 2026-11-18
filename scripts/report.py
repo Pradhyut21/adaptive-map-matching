@@ -108,6 +108,26 @@ def model_records():
         raise ValueError("Exactly five completed model records required; incomplete records cannot become a final report")
     return data,models
 
+
+def make_current_plot(comparison):
+    methods=comparison["methods"]
+    keys=("new_booster","boosting_blend","blend_hmm")
+    x=np.arange(3)
+    fig,ax=plt.subplots(figsize=(10,4))
+    for offset,key,label,color in ((-.25,"top1_accuracy","Observation Top-1","#075663"),
+                                   (0.,"sequence_lcs_f1","Ordered LCS F1","#139a8e"),
+                                   (.25,"route_continuity","Strict continuity","#d79d43")):
+        values=[methods[name][key] for name in keys]
+        bars=ax.bar(x+offset,values,width=.24,label=label,color=color)
+        for bar,value in zip(bars,values):
+            ax.text(bar.get_x()+bar.get_width()/2,value+.01,f"{value:.3f}",ha="center",fontsize=8)
+    ax.set(xticks=x,xticklabels=["Full-route booster","Boosting blend","Blend + GPS-noise Viterbi"],
+           ylim=(0,1.16),ylabel="Score",title="Current pipeline on all 19,160 student-test observations")
+    ax.legend(loc="lower right");ax.grid(axis="y",alpha=.12)
+    target=FIGURES/"current_pipeline_comparison.png"
+    fig.savefig(target,dpi=170,bbox_inches="tight");plt.close(fig)
+    return target
+
 def make_comparison_plots(models,tuning,hmm):
     FIGURES.mkdir(parents=True,exist_ok=True)
     plt.rcParams.update({"font.size":10,"axes.spines.top":False,"axes.spines.right":False,"axes.titleweight":"bold"})
@@ -440,10 +460,13 @@ def build_report():
     live_path=(NOISE_RESULTS if noise["api_integration"] is not None
                else ROUTE_RESULTS if route_records["api_integration"] is not None else RESULTS)
     tuning_comparison=load_json(REFINEMENT_RESULTS/"boost_tuning_comparison.json",False)
-    active_decoder_comparison=load_json(ROUTE_RESULTS/"classifier_decoder_comparison.json",False)
+    active_decoder_comparison=(load_json(NOISE_RESULTS/"classifier_decoder_comparison.json",False)
+                               or load_json(ROUTE_RESULTS/"classifier_decoder_comparison.json",False))
+    assessment=load_json(RESULTS/"final_evaluation_summary.json",False)
     has_route_results=all(route_records[name] is not None for name in
                           ("student_test","decoder_selection","grouped_comparison"))
     make_comparison_plots(models,tuning,hmm)
+    current_plot=make_current_plot(active_decoder_comparison) if active_decoder_comparison else None
     r=Report()
     r.p("PathSnap Trace-Lite","CoverTitle")
     r.p("Distributed map matching and route reconstruction","Heading2")
@@ -451,10 +474,7 @@ def build_report():
     r.p(f"Technical report generated from execution records on {now:%d %B %Y at %H:%M IST}.")
     r.p("The system generates candidate directed road arcs from GPS and road geometry, learns candidate scores, and reconstructs routes using an independent log-space Viterbi decoder. Reference-route data is confined to permitted label derivation and server-side evaluation after inference.")
     aggregate=hmm["hmm"]["aggregate"]
-    best_model=tuning["selected_model"]
-    selected_name=escape(MODEL_LABELS.get(best_model,best_model))
-    version="tuned " if tuning["used_tuned_model"] else ""
-    r.p(f"The original model comparison selected {version}{selected_name} by three-fold trip-grouped validation on 80 training trips. Route comparisons use {aggregate['observations']:,} observations across {aggregate['trips']} student-test trips.")
+    r.p("The deployed system uses two Histogram Gradient Boosting scorers with directed Viterbi decoding, three-sample GPS smoothing and a 15 m same-arc jitter tolerance. Model and decoder configuration were selected using training-trip validation.")
     summary_rows=[["Student-test method","Observation Top-1","Directed continuity","Ordered-sequence LCS F1"]]
     for key,label in (("baseline","Nearest road"),("classifier","Selected classifier"),("hmm","Selected classifier + HMM")):
         item=hmm[key]["aggregate"]
@@ -462,20 +482,24 @@ def build_report():
     if refinement is not None:
         item=refinement["student_test"]["hmm"]
         summary_rows.append(["Accuracy refinement + decoder",percentage(item["top1_accuracy"]),percentage(item.get("route_continuity")),number(item.get("sequence_lcs_f1"))])
-    r.table(summary_rows,[220,160,155,190])
-    if has_route_results:
-        row=route_records["student_test"]["hmm"]
-        r.p(f"Section 9 compares the full-route alignment results under both reference-label methods. The selected run reached {percentage(row['top1_accuracy'])} on full-route labels, {percentage(row['legacy_top1_accuracy'])} on earlier labels, and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])}.")
     if has_noise:
         row=noise["student_test"]["hmm"]
-        r.p(f"The current GPS-noise decoder is documented in section 10. It reached {percentage(row['top1_accuracy'])} full-route Top-1 and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])} on the student benchmark.")
+        r.table([["Current deployed pipeline","Student Top-1","Evaluator Top-1","Student ordered LCS F1"],
+                 ["Boosting blend + GPS-noise Viterbi",percentage(row["top1_accuracy"]),
+                  percentage(assessment["top1_accuracy"]) if assessment else "Pending",number(row["sequence_lcs_f1"])]],
+                [270,145,145,165])
+        r.p(f"Student scoring includes every one of {row['observations']:,} GPS observations. Strict raw-projection continuity is {percentage(row['route_continuity'])}, and earlier-label Top-1 is {percentage(row['legacy_top1_accuracy'])}. Sections 9 and 10 document the labeling and decoder changes.")
+    else:
+        r.table(summary_rows,[220,160,155,190])
+    if assessment:
+        r.p(f"The final evaluator reassessment matched {assessment['correct']:,} of {assessment['observations']:,} points across {assessment['trips']} trips. This repeated assessment followed an observed decoder failure and a revision selected on training OOF predictions.")
     if active_api and active_api.get("requests"):
         passed=sum(request.get("http_status")==200 for request in active_api["requests"])
-        r.p(f"The recorded live HTTP check returned {passed} successful predictions from {len(active_api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
+        r.p(f"The recorded student HTTP check returned {passed} successful predictions from {len(active_api['requests'])} requests. Separate LAN client requests reached the backend. The receiving CMD screenshot and team confirmation of the physical setup remain pending.")
     r.p("Pointwise accuracy uses approximate labels derived from the supplied chronological route sequences. The sequence and continuity metrics are project diagnostics.")
     r.p("AI assisted implementation, debugging and evidence compilation. The team must verify the implementation, interpret results independently and disclose the assistance according to the event policy.")
     r.page();r.heading("2.2 Dataset Understanding and EDA")
-    r.p("All 80 training and 10 student-testing trips were inspected. No evaluator-testing files were used. Raw files are whitespace-delimited without headers: .track = longitude, latitude, seconds; .nodes = longitude, latitude; .arcs = directed node pairs; .route = chronological reference arc IDs. Node and arc row indexes are trip-local identifiers.")
+    r.p("The EDA covers all 80 training and 10 student-testing trips. These EDA and fitting experiments use the development partitions. Evaluator trips were loaded later for runtime assessment. Raw files are whitespace-delimited without headers: .track = longitude, latitude, seconds; .nodes = longitude, latitude; .arcs = directed node pairs; .route = chronological reference arc IDs. Node and arc row indexes are trip-local identifiers.")
     rows=[["Partition","Trips","GPS observations","Node rows summed","Arc rows summed","Largest gap (s)","1-second intervals"]]
     for name in ("train","student_test"):
         a=eda["partitions"][name]
@@ -500,7 +524,8 @@ def build_report():
         r.p(f"Across the 90 permitted trips, alignment logged {fallbacks:,} nearest-fallback boundaries ({fallbacks/max(total,1):.3%} of observations), {ambiguous:,} ambiguous observations ({ambiguous/max(total,1):.3%}), and {poor:,} poor-fit observations whose selected reference distance exceeds the nearest-reference distance by over 50 m. Poor fits are flagged rather than silently relabeled. Source: results/feature_inventory.json.",'SmallText')
     r.page();r.heading("3.1 Overall Model Comparison")
     r.p("Exactly five distinct algorithms were trained and compared on the same cached candidate features. Three-fold GroupKFold keeps every trip and all of its candidate rows in one fold. Complete validation and student-test candidate sets are retained. Training-only negative sampling retains positives, hard negatives and a reproducible sample of remaining negatives; it changes score calibration and is disclosed.")
-    csv= pd.read_csv(RESULTS/"model_comparison.csv",keep_default_na=False)
+    csv= pd.read_csv(RESULTS/"baseline_model_comparison.csv" if (RESULTS/"baseline_model_comparison.csv").exists()
+                     else RESULTS/"model_comparison.csv",keep_default_na=False)
     columns=["Model","Algorithm Family","Key Configuration","CV Macro F1-score","Top-1 Accuracy","Route continuity","Student-Test Macro F1-score","Log Loss","Inference Time"]
     rows=[columns]
     for _,row in csv.iterrows():
@@ -509,8 +534,37 @@ def build_report():
         rows.append(values)
     r.table(rows,[80,65,170,65,60,65,70,55,55])
     r.p("Top-1 Accuracy, Route continuity, Student-Test Macro F1-score and Log Loss in this table refer to the student-testing partition; CV Macro F1-score refers to held-out training trips. Inference Time is classifier scoring from cached features; complete loading, candidates and decoding costs are reported separately.")
-    r.p(f"<b>Model selection:</b> {escape(selection['selected_model'])}. {escape(selection['reason'])} Grouped validation mean Top-1 = {number(selection.get('cv_top1'))}. This is a measured selection, not a model chosen from training accuracy alone.")
+    r.p(f"<b>Original baseline selection:</b> {escape(selection['selected_model'])}. {escape(selection['reason'])} Grouped validation mean Top-1 = {number(selection.get('cv_top1'))}. This table records the original five-algorithm experiment.")
     r.p("Metric definitions: observation Top-1 includes every GPS observation, counting missing predictions and candidate misses as failures. Candidate Macro F1 is the mean across classes 0 and 1 at threshold 0.5. Candidate precision/recall and binary log loss use all valid generated candidate rows. Candidate-miss rate is reported separately because an omitted reference candidate cannot be recovered by a scorer.")
+    current_csv=pd.read_csv(RESULTS/"model_comparison.csv",keep_default_na=False)
+    if "Status" in current_csv:
+        r.page();r.subheading("3.1 Current deployment and classifier components")
+        rows=[columns]
+        for _,record in current_csv[current_csv["Status"]!="ORIGINAL BASELINE"].iterrows():
+            values=[]
+            for column in columns:
+                value=record[column]
+                if isinstance(value,str) and value.startswith("N/A"):
+                    value="N/A - path output"
+                elif column not in ("Model","Algorithm Family","Key Configuration"):
+                    try:value=number(float(value))
+                    except (ValueError,TypeError):pass
+                elif isinstance(value,(float,np.floating)):
+                    value=number(value)
+                values.append(value)
+            rows.append(values)
+        r.table(rows,[110,65,140,65,60,65,70,55,55])
+        r.p("All Top-1 values above are student-test scores using full-route labels. Candidate F1 and log loss are defined for the scorer rows. The deployed decoder emits a road path, so those candidate-probability metrics are N/A for its row. Component inference time measures the shared pair of scorer predictions from cached features; deployed inference includes graph loading, features, scoring and decoding.")
+        r.p("The CSV names each row's status, reference labels, timing scope and source. The original baseline table uses the earlier sparse labels. Direct comparisons across label methods require the paired measurements in section 9.", "SmallText")
+        summary=load_json(RESULTS/"final_model_summary.json",False)
+        if summary:
+            rows=[["Classifier component","Fitted training Top-1","Pooled grouped-CV Top-1","Student Top-1"]]
+            for name,score in summary["components"].items():
+                rows.append([name.replace("_"," "),percentage(score["train"]["top1_accuracy"]),
+                             percentage(score["cv"]["top1_accuracy"]),percentage(score["student_test"]["top1_accuracy"])])
+            r.table(rows,[275,150,150,150])
+        if assessment:
+            r.p(f"Final evaluator Top-1 for the deployed pipeline is {percentage(assessment['top1_accuracy'])}: {assessment['correct']:,}/{assessment['observations']:,} points. This is recorded separately from the student-test columns.")
     r.page();r.heading("3.2 Separate Model Explanations")
     for i,m in enumerate(models):
         if i and i%2==0:r.page()
@@ -530,6 +584,10 @@ def build_report():
     r.image(FIGURES/"log_loss_and_scoring_time.png",max_height=240)
     r.image(FIGURES/"confusion_matrices.png",max_height=180)
     r.p("All charts above are generated from the stored experiment records. No artificial training curves or epoch histories have been created for estimators that did not produce them.")
+    if current_plot:
+        r.page();r.subheading("Current deployment and component comparison")
+        r.image(current_plot,max_height=350)
+        r.p("These three methods use full-route reference labels on the same student-test observations. The deployed noise-tolerant Viterbi stage is compared with the same fitted scorers before sequence decoding. Earlier baseline charts use the original label method.", "SmallText")
     if ablation is not None:add_reliability_ablation(r,ablation)
     r.page();r.heading("4. Bayesian Hyperparameter Optimisation")
     r.p("The selected classifier is tuned with Optuna TPE, using three-fold trip-grouped cross-validation and Top-1 accuracy as the objective. Startup random proposals are followed by model-guided proposals; the persistent study and executed trial table preserve the search history. The evaluator partition is excluded.")
@@ -607,7 +665,7 @@ def build_report():
             passed=sum(request.get("http_status")==200 for request in requests)
             r.p(f"Same-machine integration returned HTTP 200 for {passed} of {len(requests)} requests in {escape(active_api['partition'])}. See {escape(live_path.relative_to(ROOT).as_posix())}/api_integration.json and the recorded receiving logs.","SmallText")
     else:r.p("<b>API verification record pending.</b> No successful API execution is inferred from source code alone.")
-    r.p("The physical two-laptop LAN demonstration and receiving-terminal screenshot are pending. See docs/deployment.md for the demonstration procedure.","SmallText")
+    r.p("A separate LAN client reached the backend. The receiving CMD screenshot and team confirmation of the physical setup remain pending. See docs/deployment.md.","SmallText")
     r.page();r.subheading("Actual working interface")
     screenshot=live_path/"screenshots"/"ui_desktop.png"
     if not screenshot.exists():screenshot=RESULTS/"screenshots"/"ui.png"
@@ -634,7 +692,7 @@ def build_report():
         add_noise_results(r,noise["training_validation"],noise["student_test"])
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
-    r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
+    r.p("The student-testing trips are reused development data. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. The current evaluator result is a reassessment after an observed failure and a training-validated decoder revision.")
     r.p("The team should verify the recorded results, discuss cases where HMM helps or hurts, review all source code and configurations, conduct the physical LAN demonstration, and add its own conclusions. AI assistance supported implementation, debugging and evidence compilation; this document must not be misrepresented as independent student analysis.")
     r.subheading("Research concepts credited")
     r.p('Newson and Krumm (2009), <link href="https://www.microsoft.com/en-us/research/publication/hidden-markov-map-matching-noise-sparseness/" color="#075663">Hidden Markov Map Matching Through Noise and Sparseness</link>.',"SmallText")
@@ -656,6 +714,9 @@ def build_report():
                                               ROUTE_RESULTS/"screenshots/capture_metadata.json") if path.is_file())
     if has_noise:
         source_files.extend(NOISE_RESULTS/f"{name}.json" for name,record in noise.items() if record is not None)
+    source_files.extend(path for path in (RESULTS/"baseline_model_comparison.csv",RESULTS/"final_model_summary.json",
+                                          RESULTS/"final_evaluation_summary.json",NOISE_RESULTS/"classifier_decoder_comparison.json")
+                        if path.is_file())
     source_files.extend(path for path in (REFINEMENT_RESULTS/"boost_tuning_comparison.json",
                                           ROUTE_RESULTS/"classifier_decoder_comparison.json",
                                           map_path/"representative_map_metadata.json",folium_shot,

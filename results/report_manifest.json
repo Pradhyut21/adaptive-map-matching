@@ -1,10 +1,10 @@
 {
   "report": "results/PathSnap_Technical_Report.pdf",
-  "generated_ist": "2026-11-18T16:52:39.666216+05:30",
+  "generated_ist": "2026-11-18T17:06:29.277691+05:30",
   "hashing": "SHA-256 with LF-normalized JSON and CSV, and original image bytes.",
   "sources": {
     "results/model_comparison.json": "2d0beab54214d17e64df94af8808ddbb2fe91af230884388049239c5a4394cfe",
-    "results/model_comparison.csv": "5ec1ae4deacee11b2c161a87fe61a6c510b9f91c8a832823518f647652da420b",
+    "results/model_comparison.csv": "dbe944c0cbcdba1d66843b54d5b38f6138b853636e0c9e7dbbd9c7422465d18f",
     "results/selection.json": "2b7fc34f90a9ab878f7b77888d324f1e74f255ec9a407a603333b84b6a09cfd3",
     "results/tuning_summary.json": "78385290a4c90b0e1a5e377ea26036adb0a248be8df5d880dc2d56b9f97506fc",
     "results/hmm_comparison.json": "911192672b6f22af613217d643f5838341a0a48995e8aef9b450906594c70f33",
@@ -35,6 +35,10 @@
     "results/gps-noise-v1/training_validation.json": "109dfe228a8576ad50b2a8117d614a337fc13461f49be1c22ad30c83c5d42ee3",
     "results/gps-noise-v1/student_test.json": "112a1d416146b6240c215ba0fb4ad52c71499a59d37b69a30a1840c293a0df94",
     "results/gps-noise-v1/api_integration.json": "c8626d86ca93b2db88080c612df9d3b2d17d647426d5553ef7ac3142b76d2d82",
+    "results/baseline_model_comparison.csv": "541e18e6b34d51b95c7cc11f5cf2948aa35425f2e7a7e55091e8d0773941564e",
+    "results/final_model_summary.json": "5f93d1ee560e2f17810dd8bd26883602b8dc9563d5f45e8f96bbaffa33634ead",
+    "results/final_evaluation_summary.json": "ea7987ff24abc58b71d92f0782597727f201496302933f3c01c4e5ba09458fa1",
+    "results/gps-noise-v1/classifier_decoder_comparison.json": "499d298f12199d598ef8943718e9b51dd32fe74401ee2b1ef8a98a9a2dc7d97e",
     "results/context-boost-v1/boost_tuning_comparison.json": "f5cff047b4b07b00d692f917dc39293725373b72fd480be64b145194f6b07bcb",
     "results/route-context-v1/classifier_decoder_comparison.json": "0b4063e29cc0372ffff58e6a03691c1393e0e39e8a9f717a6ad949576e507eec",
     "results/gps-noise-v1/map/representative_map_metadata.json": "5ab735177ac4ec9bcc34f340497de6f6b7eae6e2e3526a0e5bac4746148a409e",

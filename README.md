@@ -8,6 +8,8 @@ This repository was implemented with AI assistance. Every team member must revie
 
 The active matcher combines two fitted Histogram Gradient Boosting variants with a distance prior, a U-turn penalty, and a decoder that tolerates GPS jitter. Training-trip validation selected a three-sample smoothing half-window and a 15 m same-arc projection tolerance. The frozen run matched **18,016 of 19,160 student-test observations (94.03%)** under full-route labels, with ordered route LCS F1 of **0.9795** and strict continuity of **96.23%**. Its earlier-label Top-1 was **72.83%**. See [training selection and student evidence](results/gps-noise-v1/).
 
+The final evaluator reassessment matched **18,790 of 19,674 points (95.51%)** over all ten evaluator trips. This reassessment followed an observed decoder failure and a revision selected using training OOF scores. The [current model comparison](results/model_comparison.csv) lists the deployed pipeline, its classifier components and the original five baselines, with each row's label method, timing scope and source. The [assessment summary](results/final_evaluation_summary.json) contains aggregate evaluator results.
+
 The preceding comparison introduced the full-route labels and the boosting blend. Each row below uses the same 19,160 student-test observations.
 
 | Pipeline | Full-route label Top-1 | Earlier label Top-1 | Ordered-sequence LCS F1 | Directed continuity |
@@ -36,7 +38,7 @@ The refinement reused Histogram Gradient Boosting with 20 candidates and 28 GPS 
 
 With the two heading reliability features, the selected classifier scored 59.53% mean grouped-CV Top-1 and 71.66% student-test Top-1. Removing them gave 57.19% and 68.25%, respectively. The reference-label alignment also uses heading. Run `python -m scripts.ablation` after tuning to reproduce this comparison.
 
-All 52 behavior and API tests passed with the updated artifact, including a regression case for slow GPS jitter on a one-way road. The earlier release's HTTP evidence is under `results/route-context-v1/`; current student verification and screenshots are under `results/gps-noise-v1/`. The physical two-laptop demonstration and receiving-terminal screenshot require team evidence.
+All 52 behavior and API tests passed with the updated artifact, including a regression case for slow GPS jitter on a one-way road. All ten live student requests exactly reproduced frozen metrics, and all ten evaluator requests returned 200. Current student verification and screenshots are under `results/gps-noise-v1/`. LAN requests reached the backend from a separate client. The receiving CMD screenshot and team confirmation of the physical laptop setup remain pending.
 
 ## Setup
 
@@ -110,7 +112,7 @@ The selection includes all points from sixteen training trips, split between slo
 python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info
 ```
 
-Open `http://127.0.0.1:8000` for a same-machine check. The UI and API may run from this one process, but the required final deployment uses a second laptop. `GET /health`, `GET /trips` and `POST /predict` perform real inference. A request body is `{"trip_id":"00000000"}` using an ID actually returned by `/trips`.
+Open `http://127.0.0.1:8000` for a same-machine check. The UI and API may run from this one process, but final deployment uses a second laptop. `GET /health`, `GET /trips` and `POST /predict` perform real inference. Select a trip ID returned by `/trips`; the installed evaluator partition has a different trip list from the student partition.
 
 `artifacts/active_model.json` selects `artifacts/gps_noise_boost.joblib` and its frozen companion settings, which use `artifacts/context_boost.joblib` for the second set of candidate scores. To reproduce the preceding decoder, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/ordered_route_boost.joblib).Path` before starting Uvicorn. Use `artifacts/context_boost.joblib` for the earlier contextual model and `artifacts/final_model.joblib` for the original Extra Trees service.
 
@@ -128,11 +130,11 @@ Open `http://localhost:8800`, enter `http://<Laptop-1-LAN-IP>:8000` in the serve
 
 `pathsnap/predict.py`, geometry, features, scoring and decoder do not read `.route` files. Only after inference completes does `backend/evaluator.py` load server-side reference information to compute aggregate metrics. The HTTP response never contains reference routes or per-observation reference labels.
 
-When the organizers supply the reserved runtime data, set `PATHSNAP_DATA` to its parent and `PATHSNAP_PARTITION=evaluator_test` (or `evaluator_testing`). Trip IDs are discovered from files; none are guessed. If references are stored separately, use `PATHSNAP_REFERENCE_ROOT` with the same partition/trip layout. Do not use reserved files for training, feature choices, tuning or development evaluation. Restart the server after changing environment variables or final artifacts.
+The supplied evaluator archive is installed locally under `evaluator_test` beside `train` and `student_test`. On another machine, extract it under the dataset root and set `PATHSNAP_DATA` to that root and `PATHSNAP_PARTITION=evaluator_test`. Trip IDs are discovered from files. If references are stored separately, use `PATHSNAP_REFERENCE_ROOT` with the same partition/trip layout. Restart the server after changing environment variables or final artifacts. Training and tuning commands use their explicitly named development partitions.
 
 ## Measurements and limitations
 
-- `.route` is an ordered arc sequence, not a point-label file. Training/evaluation point labels are derived with monotone sparse alignment preserving repeated route occurrences. Alignment uses distance and a small reliable-heading term, so pointwise evaluation shares modeling assumptions with the features. Failed alignment uses a logged nearest-reference fallback; ambiguous and poor fits are recorded. Sequence comparison is complementary evidence.
+- `.route` is an ordered arc sequence. Current labels use monotone full-route alignment with distance and heading costs, preserving repeated arc occurrences. The earlier sparse alignment, its fallbacks and diagnostics are retained for comparison. Pointwise scores measure agreement with derived labels, alongside ordered route LCS.
 - Candidate generation keeps up to 20 arcs for the active model and ten for the original model, with a 250 m initial search and a 300 m retry for empty queries. Refined features use GPS and road geometry. Training confidence weights use the known training labels and alignment diagnostics only during fitting.
 - Most observations are 1 Hz, but large gaps and disconnected roads exist. The decoder uses explicit restarts and reconstructs intermediate arcs only when directed routing supports them.
 - Motion heading uses a symmetric four-sample span, so this is offline route reconstruction. A score margin is an ambiguity indicator, not calibrated probability that the route is correct.
@@ -150,11 +152,12 @@ To regenerate the paired boosting metrics, active-model decoder comparison, inte
 ```powershell
 python -m scripts.deliverable_metrics tuning
 python -m scripts.deliverable_metrics decoder
-python -m scripts.eda --active-map 00000052 --screenshot
+python -m scripts.eda --active-map 00000052 --result-version gps-noise-v1 --screenshot
+python -m scripts.refresh_results --score
 python -m scripts.report --render
 ```
 
-`artifacts/` holds all five original fitted models, tuned Extra Trees, and the active refined boosting model with its decoder configuration. `results/` holds grouped-fold records, predictions for all ten permitted student trips, optimization trials, comparison tables, plots and the consolidated PDF. Refinement evidence is under `results/context-boost-v1/`. `results/eda/representative_map.html` shows the original HMM example. `STATUS.md` records completed work and pending evidence.
+`artifacts/` holds the original models and the current `gps_noise_boost.joblib` with its decoder configuration. `results/model_comparison.csv` is the current overview. `results/model_comparison.json` and `results/baseline_model_comparison.csv` preserve the original five-algorithm experiment. Current deployment evidence and the Folium map are under `results/gps-noise-v1/`. `STATUS.md` records verified outcomes and pending evidence.
 
 Optional screenshot verification uses `python -m pip install playwright`, `python -m playwright install chromium`, then `python -m scripts.capture_ui` against the running server. `python -m scripts.report` creates the consolidated PDF from completed result files. Never manufacture missing screenshots, losses or results.
 

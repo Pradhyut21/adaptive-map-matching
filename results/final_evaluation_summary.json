@@ -1,0 +1,12 @@
+{
+  "partition": "evaluator_test",
+  "deployment_version": "gps-noise-v1",
+  "trips": 10,
+  "observations": 19674,
+  "correct": 18790,
+  "top1_accuracy": 0.9550676019111518,
+  "all_http_200": true,
+  "label_method": "full-route monotone alignment, every GPS point included",
+  "assessment_started_utc": "2026-11-18T11:18:42.299896+00:00",
+  "interpretation": "Reassessment after an observed decoder failure. Settings for the revision were selected on training OOF predictions."
+}

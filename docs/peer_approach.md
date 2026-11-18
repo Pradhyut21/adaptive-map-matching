@@ -9,6 +9,7 @@ The new booster adds measurements of how a candidate fits nearby GPS points and 
 | Frozen pipeline | Full-route Top-1 | Earlier-label Top-1 | Ordered LCS F1 | Strict continuity |
 |---|---:|---:|---:|---:|
 | Previous contextual booster | 78.41% | 80.56% | 0.8790 | 98.80% |
-| Active blend and geometry decoder | 86.41% | 74.97% | 0.8867 | 98.27% |
+| Earlier blend and geometry decoder | 86.41% | 74.97% | 0.8867 | 98.27% |
+| Current GPS-noise decoder | 94.03% | 72.83% | 0.9795 | 96.23% |
 
-The active model matched 16,557 of 19,160 student-test points under the full-route labels, an increase of 1,534 correct matches. All ten trips improved under that label method. Trip `00000077` improved from 44.26% to 64.84% and still accounts for 3,911 points. The student-test trips are a reused benchmark. Settings selection used training trips, and performance on the reserved evaluator partition remains unmeasured.
+The earlier blend matched 16,557 of 19,160 student-test points under full-route labels. The current noise-tolerant decoder matched 18,016 points (94.03%), with a route LCS F1 of 0.9795. Trip `00000077` now scores 91.10%. Noise settings were selected using OOF scores on sixteen training trips. The student set is a reused benchmark. Final evaluator reassessment reached 95.51% over 19,674 observations after a decoder revision prompted by an observed failure. [Training selection](../results/gps-noise-v1/training_validation.json), [current student results](../results/gps-noise-v1/student_test.json), [assessment summary](../results/final_evaluation_summary.json)

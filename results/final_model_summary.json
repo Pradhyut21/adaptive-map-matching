@@ -1,0 +1,106 @@
+{
+  "components": {
+    "full_route_booster": {
+      "train": {
+        "top1_accuracy": 0.8601217750951218,
+        "correct": 179264,
+        "observations": 208417
+      },
+      "cv": {
+        "top1_accuracy": 0.808374556777998,
+        "correct": 168479,
+        "observations": 208417,
+        "candidate_count": 3648533,
+        "macro_f1": 0.9313387964461026,
+        "precision": 0.9480342096801352,
+        "recall": 0.9159882601894547,
+        "log_loss": 0.06466852183278463,
+        "confusion_matrix": [
+          [
+            3435270,
+            17170
+          ],
+          [
+            31973,
+            164120
+          ]
+        ]
+      },
+      "student_test": {
+        "top1_accuracy": 0.9188413361169102,
+        "correct": 17605,
+        "observations": 19160,
+        "candidate_count": 327161,
+        "macro_f1": 0.9496740477256431,
+        "precision": 0.9557116012475932,
+        "recall": 0.9438168672606747,
+        "log_loss": 0.02822747756341896,
+        "confusion_matrix": [
+          [
+            306486,
+            1525
+          ],
+          [
+            2057,
+            17093
+          ]
+        ],
+        "shared_pair_scoring_seconds": 11.83254510000188
+      }
+    },
+    "boosting_blend": {
+      "train": {
+        "top1_accuracy": 0.8575212194782575,
+        "correct": 178722,
+        "observations": 208417
+      },
+      "cv": {
+        "top1_accuracy": 0.8009327454094436,
+        "correct": 166928,
+        "observations": 208417,
+        "candidate_count": 3648533,
+        "macro_f1": 0.9037554279202827,
+        "precision": 0.9597814323597031,
+        "recall": 0.8610545710733477,
+        "log_loss": 0.06174449725626223,
+        "confusion_matrix": [
+          [
+            3442555,
+            9885
+          ],
+          [
+            53931,
+            142162
+          ]
+        ]
+      },
+      "student_test": {
+        "top1_accuracy": 0.8951983298538622,
+        "correct": 17152,
+        "observations": 19160,
+        "candidate_count": 327161,
+        "macro_f1": 0.9297019493961526,
+        "precision": 0.9642787375398887,
+        "recall": 0.9004847974598038,
+        "log_loss": 0.039510152075553986,
+        "confusion_matrix": [
+          [
+            307039,
+            972
+          ],
+          [
+            3751,
+            15399
+          ]
+        ],
+        "shared_pair_scoring_seconds": 11.83254510000188
+      }
+    }
+  },
+  "deployed_artifact": "artifacts/gps_noise_boost.joblib",
+  "selection": "smooth_3",
+  "metric_scope": "Candidate Macro F1 and log loss use all valid candidate rows; Top-1 counts every GPS observation.",
+  "cv_scope": "Pooled scores for all 80 training trips, each excluded from its fitting fold.",
+  "label_method": "full-route monotone alignment",
+  "threads": 3
+}

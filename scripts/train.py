@@ -83,10 +83,17 @@ def fit_evaluate(name,train,test,params=None,tag=None):
 
 def comparison_csv(records):
     columns=['Model','Algorithm Family','Key Configuration','CV Macro F1-score','Top-1 Accuracy','Route continuity','Student-Test Macro F1-score','Log Loss','Inference Time']
-    with (RESULTS/'model_comparison.csv').open('w',newline='',encoding='utf-8') as f:
+    target=RESULTS/'baseline_model_comparison.csv'
+    with target.open('w',newline='',encoding='utf-8') as f:
         writer=csv.DictWriter(f,fieldnames=columns);writer.writeheader()
         for r in records:
             writer.writerow(dict(zip(columns,[r['name'],r['algorithm_family'],json.dumps(r['params']),r['cv']['metrics']['macro_f1'],r['student_test']['top1_accuracy'],r['student_test'].get('route_continuity','Pending routed evaluation'),r['student_test']['macro_f1'],r['student_test']['log_loss'],r['inference_seconds']])))
+    if (RESULTS/'final_model_summary.json').is_file():
+        if len(records)==len(MODEL_NAMES):
+            from scripts.refresh_results import write_tables
+            write_tables()
+    else:
+        (RESULTS/'model_comparison.csv').write_bytes(target.read_bytes())
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--smoke',action='store_true');args=parser.parse_args()
