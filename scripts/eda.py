@@ -163,8 +163,16 @@ def representative_map(trip_dir, predictions=None, route_segments=None):
     (OUT/"representative_map_metadata.json").write_text(json.dumps({"trip_id":Path(trip_dir).name,"partition":"student_test","observations":len(track),"road_arcs_displayed":len(road_ids),"reference_arcs":len(reference),"prediction_layer_included":predictions is not None,"coordinate_system":network.crs.to_string()},indent=2),encoding="utf-8")
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument("--data-root",type=Path,default=DATA_ROOT);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument("--data-root",type=Path,default=DATA_ROOT);parser.add_argument("--map-only",action="store_true",help="Refresh representative map with actual saved HMM predictions");args=parser.parse_args()
     OUT.mkdir(parents=True,exist_ok=True)
+    if args.map_only:
+        p=trip_dirs("student_test",args.data_root)[0]
+        with np.load(ROOT/"results"/"predictions"/"HMM"/f"{p.name}.npz") as z:
+            predictions=z["predictions"]
+        metadata=json.loads((ROOT/"results"/"predictions"/"HMM"/f"{p.name}.json").read_text(encoding="utf-8"))
+        representative_map(p,predictions,metadata["route_segments"])
+        print(f"Refreshed actual HMM map for student-test trip {p.name}",flush=True)
+        return
     start=time.perf_counter();rows=[]
     for partition in ("train","student_test"):
         for p in trip_dirs(partition,args.data_root):

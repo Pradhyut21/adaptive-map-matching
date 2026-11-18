@@ -1,0 +1,87 @@
+{
+  "trips": [
+    {
+      "trip_id": "00000001",
+      "partition": "train",
+      "observations": 1315,
+      "candidate_rows": 12341,
+      "candidate_miss_rate": 0.001520912547528517,
+      "no_candidate_count": 0,
+      "seconds": 2.33281420000003,
+      "source_sha256": "fc7a9942c9f3cab900f6ffabe9adc7cc53ea6c695496ca67a3a4856f5c16cdd9",
+      "graph_id": "ec27ed4bc5fe9c1b1b5d",
+      "feature_version": "trace-lite-v1",
+      "feature_names": [
+        "distance_m",
+        "log_distance",
+        "heading_difference",
+        "reliable_heading_difference",
+        "heading_reliability",
+        "projection_fraction",
+        "log_segment_length",
+        "log_speed",
+        "log_time_delta",
+        "distance_rank",
+        "distance_above_best",
+        "heading_cos",
+        "heading_sin",
+        "candidate_count"
+      ],
+      "candidate_k": 10,
+      "radius_m": 100.0,
+      "alignment": {
+        "label_type": "derived_monotone_reference_alignment",
+        "observations": 1315,
+        "ambiguous_observations": 184,
+        "ambiguous_fraction": 0.1399239543726236,
+        "fallback_restarts": 0,
+        "restarts": [],
+        "nearest_fallback_fraction": 0.0,
+        "median_label_distance_m": 4.384806911698434,
+        "max_label_distance_m": 27.226163437071712
+      }
+    },
+    {
+      "trip_id": "00000000",
+      "partition": "student_test",
+      "observations": 2503,
+      "candidate_rows": 13604,
+      "candidate_miss_rate": 0.037554934079105075,
+      "no_candidate_count": 0,
+      "seconds": 2.362032800000179,
+      "source_sha256": "014622ce41caac06cf86f7b8d4112d8a1a265efee71978fbae4947f194819b79",
+      "graph_id": "cdd58e6b97d89a6192e3",
+      "feature_version": "trace-lite-v1",
+      "feature_names": [
+        "distance_m",
+        "log_distance",
+        "heading_difference",
+        "reliable_heading_difference",
+        "heading_reliability",
+        "projection_fraction",
+        "log_segment_length",
+        "log_speed",
+        "log_time_delta",
+        "distance_rank",
+        "distance_above_best",
+        "heading_cos",
+        "heading_sin",
+        "candidate_count"
+      ],
+      "candidate_k": 10,
+      "radius_m": 100.0,
+      "alignment": {
+        "label_type": "derived_monotone_reference_alignment",
+        "observations": 2503,
+        "ambiguous_observations": 116,
+        "ambiguous_fraction": 0.0463443867359169,
+        "fallback_restarts": 0,
+        "restarts": [],
+        "nearest_fallback_fraction": 0.0,
+        "median_label_distance_m": 6.532137436918209,
+        "max_label_distance_m": 145.12570447960448
+      }
+    }
+  ],
+  "elapsed_seconds": 5.187856000000011
+}

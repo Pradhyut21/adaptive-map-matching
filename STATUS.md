@@ -29,3 +29,17 @@ Started 18 November 2026, approximately 10:30 IST. Target: 13:30 IST.
 - Training-only candidate radius experiment on noisy trip00000054: K10 miss84.658% at100m,54.404% at250m. Radius250m selected for v2; remaining omissions reported, never reference-injected.
 - Custom directed decoder:19behavioral tests passed; actual2503point distance-potential smoke1.32s. This was a decoder benchmark, not trained-model accuracy.
 - EDA: finite rows/valid IDs, disconnected graph components,13train/1student nonadjacent reference steps; derived labels and explicit restarts required.
+
+## Stage 2 active execution
+- Final v2 cache built for all80training/10student-testing trips.208417/19160GPSobservations retained.
+- Candidate miss rate12.0345%train,4.6451%student-test; completevalidation/test candidate sets; no referenceinsertion.
+- Realtraining smoke2.26s, firsttrainingtrip only, excluded from selection.
+- GaussianNB,LogisticRegression,DecisionTree completed all3groupedfolds and all10studenttrip predictions; ExtraTrees/HGB in progress.
+- 31geometry/alignment/decoder/evaluation behavior tests passed;7APIreadiness/security tests passed, genuine finalmodeltestpending.
+- First source checkpoints published to authorized publicrepository main.
+
+## Stage 2 completed
+- Allfive algorithms fitted/evaluated with3GroupKFold folds acrossall80trainingtrips; all10student-testingpredictions saved permodel.
+- ExtraTrees selected solely by mean groupedCVTop1:0.5883772223. Complete comparison inresults/model_comparison.json/csv.
+- Actual fullcomparison elapsed513.20seconds. Fullvalidation/test candidates retained; modelartifacts andfoldconfigs saved.
+- Stage3A genuineOptunaTPEstarted:8plannedtrials,3startupthen5guided; persistentSQLite study.

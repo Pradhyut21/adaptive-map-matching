@@ -1,0 +1,6 @@
+{
+  "selected_model": "ExtraTrees",
+  "reason": "Highest mean three-fold trip-grouped validation Top-1 accuracy; candidate F1 and log loss as tie-breakers. Student-test labels did not choose classifier.",
+  "cv_top1": 0.5883772223278546,
+  "elapsed_seconds": 513.1991476000003
+}

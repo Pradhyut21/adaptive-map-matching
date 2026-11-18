@@ -118,6 +118,30 @@ def make_comparison_plots(models,tuning,hmm):
     axs[0].set_ylabel("True candidate class")
     fig.suptitle("Student-test candidate confusion matrices (0 = nonmatch, 1 = match)")
     fig.savefig(FIGURES/"confusion_matrices.png",dpi=170,bbox_inches="tight");plt.close(fig)
+    a,b=tuning["untuned"],tuning["tuned"]
+    labels=["CV Macro F1","CV Top-1","Student Top-1","Student Macro F1"]
+    av=[a["cv"]["metrics"]["macro_f1"],a["cv"]["metrics"]["fold_mean_top1"],a["student_test"]["top1_accuracy"],a["student_test"]["macro_f1"]]
+    bv=[b["cv"]["metrics"]["macro_f1"],b["cv"]["metrics"]["fold_mean_top1"],b["student_test"]["top1_accuracy"],b["student_test"]["macro_f1"]]
+    x=np.arange(len(labels));fig,ax=plt.subplots(figsize=(10,4))
+    ax.bar(x-.18,av,width=.36,label="Untuned",color="#9eafb6");ax.bar(x+.18,bv,width=.36,label="TPE tuned",color="#087f8c")
+    ax.set(xticks=x,xticklabels=labels,ylim=(0,1.04),title=f"Tuned versus untuned: {tuning['selected_model']}");ax.legend();ax.grid(axis="y",alpha=.15)
+    fig.savefig(FIGURES/"tuned_vs_untuned.png",dpi=170,bbox_inches="tight");plt.close(fig)
+    trials=tuning.get("trials",[])
+    if trials:
+        fig,ax=plt.subplots(figsize=(10,3.6))
+        for phase,color in (("startup_random","#9eafb6"),("guided_TPE","#087f8c")):
+            group=[t for t in trials if t.get("phase")==phase and t.get("value") is not None]
+            if group:ax.scatter([t["number"] for t in group],[t["value"] for t in group],c=color,s=45,label=phase)
+        ax.set(xlabel="Executed trial number",ylabel="Mean grouped-CV Top-1",title="Actual Optuna trial objectives");ax.legend();ax.grid(alpha=.15)
+        fig.savefig(FIGURES/"optuna_trials.png",dpi=170,bbox_inches="tight");plt.close(fig)
+    categories=[("baseline","Nearest road"),("classifier","Classifier only"),("hmm","Classifier + HMM")]
+    fig,axs=plt.subplots(1,3,figsize=(12,3.6))
+    for ax,key,title in ((axs[0],"top1_accuracy","Observation Top-1"),(axs[1],"route_continuity","Directed continuity"),(axs[2],"sequence_lcs_f1","Ordered sequence LCS F1")):
+        values=[hmm[c]["aggregate"][key] for c,_ in categories]
+        bars=ax.bar([label for _,label in categories],values,color=["#9eafb6","#cb6c36","#087f8c"])
+        for bar,v in zip(bars,values):ax.text(bar.get_x()+bar.get_width()/2,v+.01,f"{v:.3f}",ha="center",fontsize=8)
+        ax.set(ylim=(0,1.06),title=title);ax.tick_params(axis="x",labelrotation=12,labelsize=8);ax.grid(axis="y",alpha=.15)
+    fig.savefig(FIGURES/"classifier_vs_hmm.png",dpi=170,bbox_inches="tight");plt.close(fig)
 
 class Report:
     def __init__(self):
@@ -163,7 +187,7 @@ def build_report():
     selection=load_json(RESULTS/"selection.json")
     tuning=load_json(RESULTS/"tuning_summary.json")
     hmm=load_json(RESULTS/"hmm_comparison.json")
-    api=load_json(RESULTS/"api_verification.json",False)
+    api=load_json(RESULTS/"api_integration.json",False)
     prep=load_json(RESULTS/"prepare_summary.json",False)
     make_comparison_plots(models,tuning,hmm)
     r=Report()
@@ -173,7 +197,7 @@ def build_report():
     r.p(f"Generated from recorded artifacts: {now:%d %B %Y, %H:%M IST}")
     r.p("<b>Review status:</b> AI-assisted implementation and evidence compilation. This report summarizes executed code and stored metrics; the team must review the implementation, verify results, add its own interpretation, and disclose assistance according to the event policy. No second-laptop demonstration is claimed without recorded evidence.")
     r.p("The system generates candidate directed road arcs from GPS and road geometry, learns candidate scores, and reconstructs routes using an independent log-space Viterbi decoder. Reference-route data is confined to permitted label derivation and server-side evaluation after inference.")
-    r.p("<b>Evidence index:</b> results/eda/inventory.csv; results/model_comparison.json and .csv; results/cv/; results/models/; results/tuning_summary.json; results/hmm_comparison.json; results/predictions/; artifacts/; API execution logs and screenshots when recorded.")
+    r.p("<b>Evidence index:</b> results/eda/inventory.csv; results/model_comparison.json and .csv; results/cv/; results/models/; results/tuning_summary.json; results/hmm_comparison.json; results/predictions/; artifacts/; results/api_integration.json and actual screenshots when recorded.")
     r.p("<b>Important:</b> pointwise labels are derived from supplied chronological route sequences. They are approximate reference labels, not independently surveyed physical ground truth. No exact official aggregate scoring formula is asserted.")
     r.page();r.heading("2.2 Dataset Understanding and EDA")
     r.p("All 80 training and 10 student-testing trips were inspected. No evaluator-testing files were used. Raw files are whitespace-delimited without headers: .track = longitude, latitude, seconds; .nodes = longitude, latitude; .arcs = directed node pairs; .route = chronological reference arc IDs. Node and arc row indexes are trip-local identifiers.")
@@ -185,7 +209,7 @@ def build_report():
     a=eda["partitions"]["train"];b=eda["partitions"]["student_test"]
     r.p(f"Measured checks found {a['track_nonfinite_values']+b['track_nonfinite_values']} nonfinite track values, {a['invalid_arc_rows']+b['invalid_arc_rows']} invalid arc-endpoint rows, and {a['invalid_route_rows']+b['invalid_route_rows']} invalid reference IDs. Training graphs contain up to {int(a['arcs_rows']['maximum']):,} arcs. Maximum weak-component counts are {int(a['weak_components']['maximum'])} (train) and {int(b['weak_components']['maximum'])} (student-test). No isolated nodes were found.")
     r.p(f"The reference lists contain {a['nonadjacent_reference_steps']} train and {b['nonadjacent_reference_steps']} student-test nonadjacent consecutive arc steps. Repeated reference arcs occur, reaching {int(b['repeated_reference_arcs']['maximum'])} repeated occurrences in one student trip. These diagnostics motivate preserving reference-sequence positions and disclosing approximate alignment.")
-    r.p("Preprocessing uses a trip-centered WGS84 azimuthal-equidistant projection in metres, exact point-to-segment distance, a Shapely STRtree and bounded candidate lists. Empty local queries expand within the documented maximum radius; observations outside this limit remain unmatched. Networks are processed one trip at a time. The source inventory includes SHA-256 file checksums.")
+    r.p("Preprocessing uses a trip-centered WGS84 azimuthal-equidistant projection in metres, exact point-to-segment distance, a Shapely STRtree and ten-candidate bounded lists. The final feature cache uses a 250 m radius selected from training-only candidate coverage checks; the earlier 100 m smoke setting is not mixed into final training. Empty local queries may expand within the documented maximum radius; observations outside this limit remain unmatched. Networks are processed one trip at a time. The source inventory includes SHA-256 file checksums.")
     r.image(RESULTS/"eda"/"trip_and_graph_counts.png",max_height=235)
     r.page();r.subheading("EDA observations and feature design")
     r.image(RESULTS/"eda"/"gaps_and_connectivity.png",max_height=230)
@@ -222,33 +246,52 @@ def build_report():
     r.image(FIGURES/"confusion_matrices.png",max_height=180)
     r.p("All charts above are generated from the stored experiment records. No artificial training curves or epoch histories have been created for estimators that did not produce them.")
     r.page();r.heading("4. Bayesian Hyperparameter Optimisation")
-    # Print complete measured tuning metadata without guessing key names; the
-    # summary producer determines the fields and every value stays auditable.
     r.p("The selected classifier is tuned with Optuna TPE, using three-fold trip-grouped cross-validation and Top-1 accuracy as the objective. Startup random proposals are followed by model-guided proposals; the persistent study and executed trial table preserve the search history. The evaluator partition is excluded.")
-    for key,value in tuning.items():
-        if key in ("trials","trial_history"):continue
-        if isinstance(value,dict):
-            r.subheading(key.replace("_"," ").capitalize())
-            r.table([["Field","Recorded value"]]+[[k,json.dumps(v) if isinstance(v,(dict,list)) else number(v)] for k,v in value.items()],[190,495])
-        elif not isinstance(value,list):r.p(f"<b>{escape(key.replace('_',' '))}:</b> {escape(number(value))}")
-    r.p("Tuned and untuned results use the same metric definitions and data partitions. A tuned configuration is not automatically treated as better; the final-artifact choice is based on recorded grouped-validation results.")
-    for candidate in ("tuned_vs_untuned.png","tuning_comparison.png","optuna_trials.png"):
-        if (FIGURES/candidate).exists():r.image(FIGURES/candidate,max_height=230)
+    r.p(f"<b>Selected model:</b> {escape(tuning['selected_model'])}; sampler: {escape(tuning['sampler'])}; fixed seed: {tuning['seed']}; startup trials: {tuning['startup_trials']}; executed trials: {len(tuning['trials'])}; elapsed tuning/refit time: {number(tuning['elapsed_seconds'],2)} seconds.")
+    spaces={"GaussianNB":"var_smoothing: log-uniform [1e-12, 1e-4]", "LogisticRegression":"C: log-uniform [0.005, 20]", "DecisionTree":"max_depth: integer [7,20]; min_samples_leaf: log-integer [5,80]; ccp_alpha: log-uniform [1e-7,1e-3]", "ExtraTrees":"n_estimators: [40,96] step 8; max_depth: integer [10,22]; min_samples_leaf: log-integer [3,35]; max_features: uniform [0.5,1]", "HistGradientBoosting":"max_iter: [60,140] step 20; max_leaf_nodes: categorical {7,15,31}; learning_rate: log-uniform [0.04,0.2]; l2_regularization: log-uniform [0.1,20]; min_samples_leaf: [20,80] step 10"}
+    r.p(f"<b>Search space:</b> {escape(spaces.get(tuning['selected_model'],'See scripts/tune.py'))}. The small model-specific space targets complexity and regularization under the measured CPU budget.")
+    r.p(f"<b>Best executed parameters:</b> {escape(json.dumps(tuning['best_params'],sort_keys=True))}; best search objective = {number(tuning['best_objective'])}.")
+    rows=[["Version","CV Macro F1","CV fold-mean Top-1","Student Top-1","Student Macro F1","Student log loss","Scoring seconds"]]
+    for key in ("untuned","tuned"):
+        m=tuning[key];cv=m["cv"]["metrics"];test=m["student_test"]
+        rows.append([key,number(cv["macro_f1"]),number(cv["fold_mean_top1"]),number(test["top1_accuracy"]),number(test["macro_f1"]),number(test["log_loss"]),number(m["inference_seconds"],3)])
+    r.table(rows,[75,95,120,100,100,100,95])
+    r.p(f"<b>Final artifact tag:</b> {escape(tuning['final_tag'])}; tuned configuration selected: {str(tuning['used_tuned_model']).lower()}. {escape(tuning['rationale'])} Tuned and untuned scores use identical data partitions and metric definitions.")
+    r.image(FIGURES/"tuned_vs_untuned.png",max_height=220)
+    r.page();r.subheading("Executed Bayesian search history")
+    rows=[["Trial","Phase","State","Grouped objective","Seconds","Parameters"]]
+    for t in tuning["trials"]:
+        rows.append([t["number"],t.get("phase","recorded in trial"),t.get("state",""),number(t.get("value")),number(t.get("seconds"),2),json.dumps(t["params"],sort_keys=True)])
+    r.table(rows,[40,90,60,85,65,345])
+    r.image(FIGURES/"optuna_trials.png",max_height=220)
+    r.p("Source records: results/optuna.sqlite3, results/optuna_trials.csv and results/tuning_trials/. Startup proposals are random; later guided_TPE proposals are supplied by TPE. No executed search result has been replaced by a fabricated curve.","SmallText")
     r.page();r.heading("5. HMM and Viterbi Route Reconstruction")
     r.p("Hidden states are candidate directed arcs and projected positions along them. Emissions are clamped positive-class classifier scores normalized within each observation and used as log potentials. They are discriminative scores, not independently calibrated probabilities of final-route correctness.")
     r.p("The transition score penalizes disagreement between directed network distance and GPS displacement, with an additional implausible-speed penalty. For different arcs, distance includes the remaining source arc, a directed node path, and the destination prefix. Forward movement on the same arc uses direct fractional distance; backward movement requires a feasible directed loop. Impossible transitions receive negative infinity.")
     r.p("V[t,j] = log_emission[t,j] + max_i(V[t-1,i] + log_transition[i,j]). Backpointers recover the candidate sequence. Bounded Dijkstra trees are reused across destinations with an LRU limit; caches belong to one graph. Intermediate roads are reconstructed for supported transitions. Missing candidates, invalid times, large gaps and unreachable transitions produce explicit warnings and decoding restarts rather than invented connecting routes.")
-    config=load_json(ROOT/"configs"/"decoder.json",False)
-    if config:r.p(f"<b>Decoder configuration:</b> {escape(json.dumps(config,sort_keys=True))}","SmallText")
-    if isinstance(hmm,dict):
-        for key,value in hmm.items():
-            if isinstance(value,dict) and key not in ("trips","per_trip"):
-                r.subheading(key.replace("_"," ").capitalize())
-                r.table([["Metric","Recorded value"]]+[[k,number(v) if not isinstance(v,(dict,list)) else json.dumps(v)] for k,v in value.items() if not isinstance(v,list)],[220,465])
-            elif not isinstance(value,(dict,list)):r.p(f"<b>{escape(key.replace('_',' '))}:</b> {escape(number(value))}")
-    for candidate in ("classifier_vs_hmm.png","hmm_comparison.png"):
-        if (FIGURES/candidate).exists():r.image(FIGURES/candidate,max_height=260)
+    r.p(f"<b>Decoder configuration:</b> {escape(json.dumps(hmm['config'],sort_keys=True))}","SmallText")
+    rows=[["Method","Top-1","Mean trip Top-1","Continuity","Sequence LCS F1","Coverage","Eligible transitions","Excluded gaps"]]
+    for key,label in (("baseline","Nearest road"),("classifier","Classifier only"),("hmm","Classifier + HMM")):
+        a=hmm[key]["aggregate"]
+        rows.append([label,number(a["top1_accuracy"]),number(a["mean_trip_top1_accuracy"]),number(a["route_continuity"]),number(a["sequence_lcs_f1"]),number(a["prediction_coverage"]),a["eligible_transitions"],a["excluded_time_gaps"]])
+    r.table(rows,[110,65,95,75,95,70,100,75])
+    r.p(f"HMM decoder-only time across all ten cached student trips: {number(hmm['hmm']['aggregate']['inference_seconds'],2)} seconds. This excludes feature preparation and model scoring; live API timing measures the complete prediction pipeline. Candidate-miss rate on these shared candidates is {number(hmm['hmm']['aggregate']['candidate_miss_rate'])}. {escape(hmm['methodology'])}","SmallText")
+    r.image(FIGURES/"classifier_vs_hmm.png",max_height=230)
     r.p("Continuity counts feasible directed transitions within the recorded routing/time bounds. Eligible missing or unreachable predictions fail; exogenous invalid/large timestamp gaps are excluded and counted separately. Coverage and restarts are disclosed. Ordered-sequence performance is exact bitset LCS F1 = 2*LCS/(predicted sequence length + reference sequence length), a diagnostic rather than an official scoring formula.")
+    r.page();r.subheading("Per-trip reconstruction evidence and failure cases")
+    rows=[["Trip","Nearest Top-1","Classifier Top-1","HMM Top-1","HMM continuity","HMM LCS F1","Restarts","Decoder seconds"]]
+    for b,c,h in zip(hmm["baseline"]["trips"],hmm["classifier"]["trips"],hmm["hmm"]["trips"]):
+        if not (b["trip_id"]==c["trip_id"]==h["trip_id"]):raise ValueError("Trip order mismatch in HMM evidence")
+        rows.append([h["trip_id"],number(b["top1_accuracy"]),number(c["top1_accuracy"]),number(h["top1_accuracy"]),number(h["route_continuity"]),number(h["sequence_lcs_f1"]),h.get("restart_count","See decoder_stats"),number(h.get("inference_seconds"),2)])
+    r.table(rows,[75,85,90,85,90,85,85,90])
+    improvements=[h['trip_id'] for c,h in zip(hmm['classifier']['trips'],hmm['hmm']['trips']) if h['top1_accuracy']>c['top1_accuracy']]
+    regressions=[h['trip_id'] for c,h in zip(hmm['classifier']['trips'],hmm['hmm']['trips']) if h['top1_accuracy']<c['top1_accuracy']]
+    r.p(f"Measured pointwise improvement over classifier-only occurs on trips: {', '.join(improvements) if improvements else 'none'}. Measured pointwise regression occurs on trips: {', '.join(regressions) if regressions else 'none'}. Inspect the saved route overlays and warning records before assigning a cause; better continuity does not necessarily imply a more accurate reference match.")
+    reasons={}
+    for h in hmm['hmm']['trips']:
+        for w in h.get('warnings',[]):
+            name=w.get('reason','unspecified');reasons[name]=reasons.get(name,0)+1
+    r.table([["Recorded warning reason","Count"]]+[[k,v] for k,v in sorted(reasons.items())],[500,185])
     r.page();r.heading("6. Geographical Visualisation Using Folium")
     meta=load_json(RESULTS/"eda"/"representative_map_metadata.json",False) or {}
     r.p(f"The committed interactive map is results/eda/representative_map.html, generated from actual permitted student-test trip {escape(str(meta.get('trip_id','recorded in metadata')))}. Blue markers show GPS, grey lines show road geometry, orange shows the supplied reference, and teal shows predictions when available. Layer controls and labels allow comparison. No reference layer is returned to the evaluator UI.")
@@ -263,15 +306,29 @@ def build_report():
     if api:
         for key,value in api.items():
             if not isinstance(value,(dict,list)):r.p(f"<b>{escape(key.replace('_',' '))}:</b> {escape(str(value))}")
-        r.p("See results/api_verification.json and the retained actual server request logs for complete integration evidence.")
+        requests=api.get("requests",[])
+        if requests:
+            rows=[["Trip","HTTP status","Observations","HTTP elapsed (s)","Run ID"]]
+            for request in requests:
+                rows.append([request["trip_id"],request.get("http_status","N/A"),request.get("observations","N/A"),number(request.get("http_seconds"),2),request.get("run_id","N/A")])
+            r.table(rows,[90,85,100,110,300])
+        r.p("See results/api_integration.json and retained actual server request logs for the full same-machine integration evidence. These checks execute the real API but do not establish a successful request from a second physical device.")
     else:r.p("<b>API verification record pending.</b> No successful API execution is inferred from source code alone.")
     r.p("<b>Second-laptop LAN demonstration:</b> pending unless the team adds real evidence from the second physical device. Local browser/API checks do not establish a successful two-device demonstration.")
-    screenshot=RESULTS/"screenshots"/"ui.png"
+    r.page();r.subheading("Actual working interface")
+    screenshot=RESULTS/"screenshots"/"ui_desktop.png"
+    if not screenshot.exists():screenshot=RESULTS/"screenshots"/"ui.png"
     if screenshot.exists():r.image(screenshot,max_height=330)
     else:r.p("Working-UI screenshot pending at generation time.")
     server=RESULTS/"screenshots"/"api_terminal.png"
     if server.exists():r.page();r.subheading("Actual API receiving-terminal evidence");r.image(server,max_height=380)
-    else:r.p("Receiving-laptop terminal screenshot pending; retained text logs do not substitute for the required physical demonstration screenshot.")
+    else:
+        logs=RESULTS/"screenshots"/"server_logs_browser.png"
+        if logs.exists():
+            r.page();r.subheading("Actual server logs displayed in the browser")
+            r.image(logs,max_height=365)
+            r.p("This screenshot displays recorded server logs in a browser. It is not a screenshot of a receiving CMD/terminal, and it does not establish a second-laptop LAN demonstration.","SmallText")
+        r.p("Receiving-laptop CMD/terminal screenshot remains pending; retained logs and the browser log viewer do not substitute for the required physical demonstration screenshot.")
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
     r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
@@ -281,7 +338,8 @@ def build_report():
     target=RESULTS/"PathSnap_Technical_Report.pdf"
     doc=SimpleDocTemplate(str(target),pagesize=landscape(A4),rightMargin=35,leftMargin=35,topMargin=34,bottomMargin=42,title="PathSnap Trace-Lite Technical Report",author="PathSnap team - AI-assisted execution evidence")
     doc.build(r.story,onFirstPage=_footer,onLaterPages=_footer)
-    source_files=[RESULTS/"model_comparison.json",RESULTS/"tuning_summary.json",RESULTS/"hmm_comparison.json",RESULTS/"eda"/"summary.json"]
+    source_files=[RESULTS/"model_comparison.json",RESULTS/"model_comparison.csv",RESULTS/"selection.json",RESULTS/"tuning_summary.json",RESULTS/"hmm_comparison.json",RESULTS/"eda"/"summary.json",RESULTS/"eda"/"inventory.csv",RESULTS/"eda"/"representative_map_metadata.json"]
+    if (RESULTS/"api_integration.json").exists():source_files.append(RESULTS/"api_integration.json")
     manifest={"report":str(target.relative_to(ROOT)),"generated_ist":now.isoformat(),"sources":{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_files},"team_review_required":True,"second_laptop_demo":"pending_without_team_evidence"}
     (RESULTS/"report_manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print(f"Generated {target}",flush=True)

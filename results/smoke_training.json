@@ -1,0 +1,33 @@
+{
+  "seconds": 2.2559708999997383,
+  "training_trips": [
+    "00000001"
+  ],
+  "student_metrics": {
+    "candidate_count": 16866,
+    "macro_f1": 0.9517591266655437,
+    "precision": 0.9489223539124705,
+    "recall": 0.9546508041065828,
+    "log_loss": 0.0962232446614225,
+    "confusion_matrix": [
+      [
+        14238,
+        219
+      ],
+      [
+        182,
+        2227
+      ]
+    ],
+    "observations": 2503,
+    "correct": 2259,
+    "top1_accuracy": 0.9025169796244507,
+    "prediction_coverage": 1.0,
+    "candidate_miss_rate": 0.037554934079105075,
+    "per_trip_top1": {
+      "00000000": 0.9025169796244507
+    },
+    "mean_trip_top1_accuracy": 0.9025169796244507
+  },
+  "purpose": "runtime and API smoke only, excluded from official model comparison"
+}

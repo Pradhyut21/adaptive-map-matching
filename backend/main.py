@@ -21,6 +21,12 @@ from pathsnap.predict import load_artifact,predict_trip
 from .evaluator import evaluate_prediction
 
 logger=logging.getLogger('pathsnap.api')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler=logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
+    logger.addHandler(handler)
+logger.propagate=False
 MODEL=None
 MODEL_ERROR=None
 LOCK=threading.Lock()

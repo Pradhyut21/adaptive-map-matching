@@ -1,0 +1,11 @@
+{
+  "top1_accuracy": "Correct nonmissing predicted directed arc / all GPS observations, including candidate misses and decoder failures; labels are derived reference labels.",
+  "candidate_macro_f1": "Unweighted mean of negative/positive candidate-class F1 at probability threshold 0.5 over all generated valid candidate rows.",
+  "precision_recall": "Macro average over candidate classes 0 and 1 with zero_division=0; all generated candidate rows retained at validation/test.",
+  "log_loss": "Binary candidate log loss on all valid generated rows, probabilities clamped to [1e-7,1-1e-7]. Missing reference candidates are reported separately.",
+  "candidate_miss_rate": "GPS observations whose derived reference arc is absent from generated candidates / all observations.",
+  "prediction_coverage": "Observations with nonmissing predictions / all observations.",
+  "sequence_lcs_f1": "2*exact ordered arc LCS length / (predicted reconstructed arc sequence length + reference route length). A diagnostic, not an official evaluator formula.",
+  "route_continuity": "Directed reachable transitions within documented time/speed/search bounds / eligible consecutive observation pairs; exogenous invalid/large time gaps excluded, missing or unreachable predictions fail. Always report denominator.",
+  "labels": "Pointwise labels are approximate monotone alignment to supplied reference arc sequences; no assertion of independently verified physical truth."
+}
