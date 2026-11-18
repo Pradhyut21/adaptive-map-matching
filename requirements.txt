@@ -1,0 +1,14 @@
+numpy>=2.0,<3
+scipy>=1.13,<2
+scikit-learn>=1.6,<2
+shapely>=2.0,<3
+pyproj>=3.6,<4
+optuna>=4,<6
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+folium>=0.18,<2
+matplotlib>=3.9,<4
+pandas>=2.2,<3
+joblib>=1.4,<2
+reportlab>=4,<6
+pypdf>=5,<7
