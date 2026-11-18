@@ -43,3 +43,14 @@ Started 18 November 2026, approximately 10:30 IST. Target: 13:30 IST.
 - ExtraTrees selected solely by mean groupedCVTop1:0.5883772223. Complete comparison inresults/model_comparison.json/csv.
 - Actual fullcomparison elapsed513.20seconds. Fullvalidation/test candidates retained; modelartifacts andfoldconfigs saved.
 - Stage3A genuineOptunaTPEstarted:8plannedtrials,3startupthen5guided; persistentSQLite study.
+
+## Bayesian optimization progress
+- Trial0completed in187.3seconds: mean groupedCVTop1=0.5952758852 versusuntuned0.5883772223. Trial0isstartup sampling,notguidedTPE.
+- Eighttrials planned:3startupthen5guided. Estimatedfirst-trialtotal25minutes.
+- Allfive fittedmodelartifacts and50studenttrip predictionfiles pushed to main(2582811).
+- Lightweight UIservice runningonport8800; APIwillstartwhenfinalmodel/configarecomplete.
+
+## Stage 3A search completed; refit active
+- All8 optimization trials executed:3startup and5guidedTPE.
+- Best executed meanCVTop1=0.5952758852.
+- Final refit on all80trainingtrips in progress. Full ten-trip classifier/HMM comparison andliveHTTPchecks follow.

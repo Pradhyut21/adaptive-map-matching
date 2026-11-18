@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from time import perf_counter
 import joblib
+import json
 import numpy as np
 from .settings import ROOT,CANDIDATE_K,CANDIDATE_RADIUS,FEATURE_VERSION
 from .geometry import load_network,load_observations
@@ -29,6 +30,8 @@ def load_artifact(path=None):
         raise ValueError('Model and feature schema differ; retrain or use matching code')
     if artifact.get('candidate_k')!=CANDIDATE_K or artifact.get('candidate_radius_m')!=CANDIDATE_RADIUS:
         raise ValueError('Model and candidate configuration differ')
+    config_path=ROOT/'artifacts/final_config.json'
+    if config_path.exists():artifact['decoder_config']=json.loads(config_path.read_text()).get('decoder',{})
     return artifact
 
 def predict_trip(trip_dir,artifact=None,decoder_config=None):
@@ -40,11 +43,12 @@ def predict_trip(trip_dir,artifact=None,decoder_config=None):
     loaded=perf_counter()
     candidates=network.candidates(xy,k=CANDIDATE_K,radius=CANDIDATE_RADIUS)
     X,motion=build_features(network,candidates,xy,track[:,2])
+    if artifact.get('zeroed_feature_indices'):X[...,artifact['zeroed_feature_indices']]=0.
     features_done=perf_counter()
     probabilities=np.zeros_like(candidates.distances,dtype=np.float32)
     if candidates.valid.any():probabilities[candidates.valid]=positive_scores(artifact['model'],X[candidates.valid])
     scored=perf_counter()
     classifier,_=select_top1(candidates.arc_ids,probabilities)
-    result=decode(network,candidates,probabilities,xy,track[:,2],config=decoder_config)
+    result=decode(network,candidates,probabilities,xy,track[:,2],config=decoder_config or artifact.get('decoder_config'))
     end=perf_counter()
     return Prediction(network,candidates,track,xy,probabilities,classifier,result,motion,{'graph_and_track_seconds':loaded-start,'feature_seconds':features_done-loaded,'classifier_seconds':scored-features_done,'decoder_seconds':end-scored,'inference_seconds':end-start},artifact['model_name'])

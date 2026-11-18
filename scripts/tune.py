@@ -3,9 +3,11 @@ import argparse
 import json
 import shutil
 import time
+from dataclasses import asdict
 import optuna
 from pathsnap.settings import ROOT,SEED
 from pathsnap.learning import load_partition,DEFAULTS
+from pathsnap.decoder import DecoderConfig
 from scripts.train import cross_validate,fit_evaluate,dump
 
 def suggest(trial,name):
@@ -46,7 +48,7 @@ def main():
     trials=[{'number':t.number,'value':t.value,'params':t.params,'state':t.state.name,'seconds':t.user_attrs.get('elapsed_seconds'),'phase':'startup_random' if t.number<3 else 'guided_TPE'} for t in study.trials]
     summary={'selected_model':selected,'objective':'mean three-fold GroupKFold observation-level Top-1 accuracy','sampler':'Optuna TPESampler','startup_trials':3,'seed':SEED,'trials':trials,'best_params':study.best_params,'best_objective':study.best_value,'untuned':untuned,'tuned':tuned,'final_tag':tag,'used_tuned_model':use_tuned,'elapsed_seconds':time.perf_counter()-start,'rationale':'Choose tuned only if grouped-CV Top-1 >= untuned; never select using evaluator data.'}
     dump(ROOT/'results/tuning_summary.json',summary)
-    dump(ROOT/'artifacts/final_config.json',{'model_name':selected,'tag':tag,'feature_version':tuned.get('feature_version','trace-lite-v2'),'decoder':{'beta':30.,'max_speed':55.,'gap_seconds':60.},'selected_by':'grouped-CV Top-1'})
+    dump(ROOT/'artifacts/final_config.json',{'model_name':selected,'tag':tag,'feature_version':tuned.get('feature_version','trace-lite-v2'),'decoder':asdict(DecoderConfig()),'selected_by':'grouped-CV Top-1'})
     print('FINAL MODEL',tag,flush=True)
 
 if __name__=='__main__':main()

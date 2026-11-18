@@ -14,7 +14,7 @@ def evaluate_prediction(prediction,reference_trip_dir):
     result.update(lcs_f1(prediction.decoded.route_arc_ids,reference))
     choices=np.maximum(prediction.decoded.candidate_indices,0)
     fractions=prediction.candidates.fractions[np.arange(len(choices)),choices]
-    continuity=evaluate_continuity(prediction.network,prediction.decoded.arc_ids,fractions,prediction.track_xy,prediction.track[:,2])
+    continuity=evaluate_continuity(prediction.network,prediction.decoded.arc_ids,fractions,prediction.track_xy,prediction.track[:,2],config=prediction.decoded.stats['config'])
     result.update(continuity)
     result['reference_label_note']='Aggregate metrics use approximate reference-route alignment, not independently verified pointwise truth.'
     result['alignment_ambiguous_fraction']=alignment['ambiguous_fraction']

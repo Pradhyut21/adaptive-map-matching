@@ -36,9 +36,9 @@ RUNTIME.mkdir(parents=True,exist_ok=True)
 def partition_name():
     explicit=os.environ.get('PATHSNAP_PARTITION')
     if explicit:
-        if explicit not in ('student_test','evaluator_test','evaluator_testing'):raise ValueError('Unsupported runtime partition')
+        if not re.fullmatch(r'[A-Za-z0-9_-]+',explicit) or explicit=='train':raise ValueError('Runtime partition must be a safe evaluation directory name, not train')
         return explicit
-    for p in ('evaluator_test','evaluator_testing'):
+    for p in ('evaluator_test','evaluator_testing','eval_test'):
         if (DATA_ROOT/p).is_dir():return p
     return 'student_test'
 

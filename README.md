@@ -9,7 +9,7 @@ This repository was implemented with AI assistance. Every team member must revie
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-executed.txt
 python -m scripts.import_data --zip "C:\path\to\Student folder.zip" --destination data
 $env:PATHSNAP_DATA = (Resolve-Path data).Path
 $env:OMP_NUM_THREADS = '4'
@@ -17,6 +17,8 @@ $env:OPENBLAS_NUM_THREADS = '4'
 ```
 
 The input directory must contain `train/<trip>/<trip>.{track,nodes,arcs,route}` and `student_test/...`. The importer only extracts these permitted development partitions. Raw data, feature caches, secrets and evaluator files are excluded from Git.
+
+`requirements-executed.txt` pins the versions used for the saved model artifacts. `requirements.txt` gives broader development ranges; if you change the scikit-learn version, retrain rather than assuming serialized estimators remain compatible.
 
 ## Reproduce the experiments
 
@@ -61,7 +63,7 @@ When the organizers supply the reserved runtime data, set `PATHSNAP_DATA` to its
 
 ## Measurements and limitations
 
-- `.route` is an ordered arc sequence, not a point-label file. Training/evaluation point labels are derived with monotone sparse alignment preserving repeated route occurrences. Failed alignment uses a logged nearest-reference fallback; ambiguous and poor fits are recorded.
+- `.route` is an ordered arc sequence, not a point-label file. Training/evaluation point labels are derived with monotone sparse alignment preserving repeated route occurrences. Alignment uses distance and a small reliable-heading term, so pointwise evaluation shares modeling assumptions with the features. Failed alignment uses a logged nearest-reference fallback; ambiguous and poor fits are recorded. Sequence comparison is complementary evidence.
 - Candidate generation uses at most ten arcs within 250 m (empty queries may expand to 300 m). The radius was increased after a training-only coverage experiment; remaining candidate misses stay Top-1 failures.
 - Most observations are 1 Hz, but large gaps and disconnected roads exist. The decoder uses explicit restarts and reconstructs intermediate arcs only when directed routing supports them.
 - Motion heading uses a symmetric four-sample span, so this is offline route reconstruction. A score margin is an ambiguity indicator, not calibrated probability that the route is correct.
@@ -74,6 +76,8 @@ When the organizers supply the reserved runtime data, set `PATHSNAP_DATA` to its
 `artifacts/` holds all five fitted models, the tuned candidate, final model and configuration. `results/` holds grouped-fold records, predictions for all ten permitted student trips, optimization trials, comparison tables, plots and the consolidated PDF. `results/eda/representative_map.html` is the actual Folium map. `STATUS.md` records real progress and outstanding evidence.
 
 Optional screenshot verification uses `python -m pip install playwright`, `python -m playwright install chromium`, then `python -m scripts.capture_ui` against the running server. `python -m scripts.report` creates the consolidated PDF from completed result files. Never manufacture missing screenshots, losses or results.
+
+For screenshot capture and PDF rendering together, install `requirements-dev.txt`, install Chromium as above, and use `python -m scripts.report --render`. Rendered review pages are local QA files and are excluded from the submission ZIP.
 
 ## Research concepts
 

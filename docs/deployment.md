@@ -7,7 +7,7 @@ The inference pipeline runs on Laptop 1. Laptop 2 serves only the static UI and 
 From the project root, install dependencies and set the permitted dataset location. The root README describes training and required artifacts.
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-executed.txt
 $env:PATHSNAP_DATA = 'D:\path\to\Student folder'
 python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```

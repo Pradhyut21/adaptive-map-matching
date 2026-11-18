@@ -89,6 +89,9 @@ def main():
     dump(ROOT/'results/model_comparison.json',comparison);comparison_csv(comparison['models'])
     output={'partition':'student_test','model_tag':tag,'config':asdict(DecoderConfig()),'baseline':{'aggregate':aggregate(baseline),'trips':baseline},'classifier':{'aggregate':aggregate(methods[tag]),'trips':methods[tag]},'hmm':{'aggregate':aggregate(hmm),'trips':hmm},'methodology':'Same candidates/reference-derived labels and directed shortest-path reconstruction for classifier and HMM. Candidate failures remain in Top-1; gaps excluded only from continuity as documented. HMM times are decoder-only from cached features; live API records full pipeline timing.'}
     dump(ROOT/'results/hmm_comparison.json',output)
+    config=json.loads((ROOT/'artifacts/final_config.json').read_text())
+    config['decoder']=asdict(DecoderConfig())
+    dump(ROOT/'artifacts/final_config.json',config)
     print('HMM aggregate',output['hmm']['aggregate'],flush=True)
 
 if __name__=='__main__':main()

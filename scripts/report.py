@@ -181,6 +181,42 @@ def _footer(canvas,doc):
     canvas.drawRightString(w-35,19,f"Page {doc.page}")
     canvas.restoreState()
 
+def add_reliability_ablation(report, evidence):
+    """Optional same-algorithm feature comparison, only from executed records."""
+    full=evidence["full_features"]
+    reduced=evidence["without_reliability"]
+    report.page();report.heading("3.4 Optional Motion-Reliability Feature Ablation")
+    report.p(f"This experiment is a feature variant of the selected {escape(evidence['algorithm'])} algorithm, not a sixth algorithm. It removes {escape(', '.join(evidence['removed_features']))} while retaining unweighted heading and the same heading smoothing. Both variants use identical fixed final hyperparameters, trip-grouped folds and training-negative sampler.")
+    report.p(f"<b>Fixed parameters:</b> {escape(json.dumps(evidence['fixed_params'],sort_keys=True))}","SmallText")
+    report.p(f"<b>Hypothesis:</b> {escape(str(evidence['hypothesis']))}")
+    rows=[["Feature variant","CV fold-mean Top-1","CV Macro F1","Student Top-1","Student Macro F1","Student log loss"]]
+    values=[]
+    for label,record in (("Full features",full),("Without reliability",reduced)):
+        cv=record["cv"]["metrics"];test=record["student_test"]
+        v=[cv["fold_mean_top1"],cv["macro_f1"],test["top1_accuracy"],test["macro_f1"],test["log_loss"]]
+        values.append(v)
+        rows.append([label]+[number(x,5) for x in v])
+    delta=np.asarray(values[0])-np.asarray(values[1])
+    rows.append(["Full minus removed"]+[f"{x:+.5f}" for x in delta])
+    report.table(rows,[135,120,100,110,115,105])
+    def outcome(value):
+        if value>0:return "improvement"
+        if value<0:return "regression"
+        return "no change"
+    report.p(f"Using full features yields a grouped-CV Top-1 {outcome(delta[0])} of {abs(delta[0]):.5f} and a student-test Top-1 {outcome(delta[2])} of {abs(delta[2]):.5f} relative to removing reliability. Positive deltas favor the full feature set for Top-1 and F1; negative log-loss delta favors the full feature set. This is a factual comparison against derived reference labels, not a claim of independent physical-position accuracy.")
+    fig,ax=plt.subplots(figsize=(10,3.3));x=np.arange(4)
+    ax.bar(x-.18,values[0][:4],width=.36,color="#087f8c",label="Full features")
+    ax.bar(x+.18,values[1][:4],width=.36,color="#9eafb6",label="Without reliability")
+    for shift,v in ((-.18,values[0]),(.18,values[1])):
+        for j,y in enumerate(v[:4]):ax.text(j+shift,y+.008,f"{y:.4f}",ha="center",fontsize=7)
+    ax.set(xticks=x,xticklabels=["CV Top-1","CV Macro F1","Student Top-1","Student Macro F1"],ylim=(0,1.06),title="Executed same-algorithm feature ablation")
+    ax.legend(loc="lower right");ax.grid(axis="y",alpha=.15)
+    target=FIGURES/"motion_reliability_ablation.png"
+    fig.savefig(target,dpi=170,bbox_inches="tight");plt.close(fig)
+    report.image(target,max_height=205)
+    report.p(f"<b>Selection effect:</b> {escape(str(evidence['selection_effect']))} The final artifact was frozen before this ablation. No student-test-based retuning or model replacement is implied. Elapsed experiment time: {number(evidence['elapsed_seconds'],2)} seconds.","SmallText")
+    report.p(f"<b>Limitations:</b> {escape(str(evidence['limitations']))} The label-alignment procedure also contains a heading term, so agreement with these derived labels is not independent evidence of physical accuracy. This comparison removes the two reliability columns but does not remove all heading information.","SmallText")
+
 def build_report():
     comparison,models=model_records()
     eda=load_json(RESULTS/"eda"/"summary.json")
@@ -188,6 +224,7 @@ def build_report():
     tuning=load_json(RESULTS/"tuning_summary.json")
     hmm=load_json(RESULTS/"hmm_comparison.json")
     api=load_json(RESULTS/"api_integration.json",False)
+    ablation=load_json(RESULTS/"ablation.json",False)
     prep=load_json(RESULTS/"prepare_summary.json",False)
     make_comparison_plots(models,tuning,hmm)
     r=Report()
@@ -215,6 +252,14 @@ def build_report():
     r.image(RESULTS/"eda"/"gaps_and_connectivity.png",max_height=230)
     r.image(RESULTS/"eda"/"missing_values.png",max_height=150)
     r.p("Candidate features include distance, log distance, heading disagreement, reliability-weighted heading disagreement, motion reliability, projection fraction, segment length, observed speed, time interval, distance rank, distance above best, heading sine/cosine and candidate count. IDs are excluded. Symmetric motion smoothing uses neighboring observations, so the implementation performs offline reconstruction rather than claiming causal tracking. Learned preprocessing is fitted within training folds.")
+    r.p("Pointwise reference labels are derived with sparse dynamic programming over reference-route positions, preserving repeated occurrences. Alignment emission cost combines squared segment distance (20 m scale) with a small reliability-weighted heading term; transitions favor monotone progress consistent with observed displacement. Impossible monotone steps use a logged exact nearest-reference fallback. These labels therefore share geometric and motion assumptions with the prediction features and are not independent physical point ground truth. Ordered-sequence comparison against the supplied route is a complementary diagnostic.")
+    inventory=load_json(RESULTS/'feature_inventory.json',False)
+    if inventory:
+        trips=inventory['trips'];total=sum(t['observations'] for t in trips)
+        fallbacks=sum(t['alignment']['fallback_restarts'] for t in trips)
+        poor=sum(t['alignment'].get('poor_fit_count',0) for t in trips)
+        ambiguous=sum(t['alignment']['ambiguous_observations'] for t in trips)
+        r.p(f"Across the 90 permitted trips, alignment logged {fallbacks:,} nearest-fallback boundaries ({fallbacks/max(total,1):.3%} of observations), {ambiguous:,} ambiguous observations ({ambiguous/max(total,1):.3%}), and {poor:,} poor-fit observations whose selected reference distance exceeds the nearest-reference distance by over 50 m. Poor fits are flagged rather than silently relabeled. Source: results/feature_inventory.json.",'SmallText')
     r.page();r.heading("3.1 Overall Model Comparison")
     r.p("Exactly five distinct algorithms were trained and compared on the same cached candidate features. Three-fold GroupKFold keeps every trip and all of its candidate rows in one fold. Complete validation and student-test candidate sets are retained. Training-only negative sampling retains positives, hard negatives and a reproducible sample of remaining negatives; it changes score calibration and is disclosed.")
     csv= pd.read_csv(RESULTS/"model_comparison.csv",keep_default_na=False)
@@ -245,6 +290,7 @@ def build_report():
     r.image(FIGURES/"log_loss_and_scoring_time.png",max_height=240)
     r.image(FIGURES/"confusion_matrices.png",max_height=180)
     r.p("All charts above are generated from the stored experiment records. No artificial training curves or epoch histories have been created for estimators that did not produce them.")
+    if ablation is not None:add_reliability_ablation(r,ablation)
     r.page();r.heading("4. Bayesian Hyperparameter Optimisation")
     r.p("The selected classifier is tuned with Optuna TPE, using three-fold trip-grouped cross-validation and Top-1 accuracy as the objective. Startup random proposals are followed by model-guided proposals; the persistent study and executed trial table preserve the search history. The evaluator partition is excluded.")
     r.p(f"<b>Selected model:</b> {escape(tuning['selected_model'])}; sampler: {escape(tuning['sampler'])}; fixed seed: {tuning['seed']}; startup trials: {tuning['startup_trials']}; executed trials: {len(tuning['trials'])}; elapsed tuning/refit time: {number(tuning['elapsed_seconds'],2)} seconds.")
@@ -340,6 +386,7 @@ def build_report():
     doc.build(r.story,onFirstPage=_footer,onLaterPages=_footer)
     source_files=[RESULTS/"model_comparison.json",RESULTS/"model_comparison.csv",RESULTS/"selection.json",RESULTS/"tuning_summary.json",RESULTS/"hmm_comparison.json",RESULTS/"eda"/"summary.json",RESULTS/"eda"/"inventory.csv",RESULTS/"eda"/"representative_map_metadata.json"]
     if (RESULTS/"api_integration.json").exists():source_files.append(RESULTS/"api_integration.json")
+    if ablation is not None:source_files.append(RESULTS/"ablation.json")
     manifest={"report":str(target.relative_to(ROOT)),"generated_ist":now.isoformat(),"sources":{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_files},"team_review_required":True,"second_laptop_demo":"pending_without_team_evidence"}
     (RESULTS/"report_manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print(f"Generated {target}",flush=True)
