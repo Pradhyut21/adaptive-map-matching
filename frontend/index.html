@@ -28,7 +28,7 @@
     <p id="message" class="message" role="status">The UI sends a trip ID to the API. Predictions are computed on the receiving laptop.</p>
 
     <section class="metrics-grid" aria-label="Evaluation results">
-      <article class="metric-card"><p>Observation Top-1 <span title="Correct predicted road arcs / all GPS observations, including missing predictions.">ⓘ</span></p><strong id="metricAccuracy">—</strong><small>Against derived reference labels</small></article>
+      <article class="metric-card"><p>Observation Top-1 <span title="Correct predicted road arcs / all GPS observations, including missing predictions.">ⓘ</span></p><strong id="metricAccuracy">—</strong><small id="accuracyBasis">Against derived reference labels</small></article>
       <article class="metric-card"><p>Route continuity <span title="Feasible directed transitions / eligible consecutive observation pairs. See the report for gap exclusions.">ⓘ</span></p><strong id="metricContinuity">—</strong><small>Directed network feasibility</small></article>
       <article class="metric-card"><p>Sequence LCS F1 <span title="Ordered road-sequence similarity using longest common subsequence. This is a project diagnostic, not an official scoring formula.">ⓘ</span></p><strong id="metricSequence">—</strong><small>Ordered route agreement</small></article>
       <article class="metric-card"><p>Inference time</p><strong id="metricTime">—</strong><small>Measured on the API server</small></article>

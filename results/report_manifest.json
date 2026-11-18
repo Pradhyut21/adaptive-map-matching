@@ -1,6 +1,6 @@
 {
   "report": "results/PathSnap_Technical_Report.pdf",
-  "generated_ist": "2026-11-18T15:16:03.230895+05:30",
+  "generated_ist": "2026-11-18T15:42:48.461315+05:30",
   "hashing": "SHA-256 with LF-normalized JSON and CSV, and original image bytes.",
   "sources": {
     "results/model_comparison.json": "2d0beab54214d17e64df94af8808ddbb2fe91af230884388049239c5a4394cfe",
@@ -25,7 +25,13 @@
     "results/context-boost-v1/api_integration.json": "90075d48e81edf176691b8d0435b585f316f1f01685f8b9fe10be71a5f4c8ace",
     "results/context-boost-v1/screenshots/ui_desktop.png": "8005d3ab93683d1ac857b869ca5aab83d5f63f8d8e8d336caa8b34946748eb81",
     "results/context-boost-v1/screenshots/capture_metadata.json": "e338559cc33014a483194edb25f9405ed5b015979f8f2c9b736509f577dd4357",
-    "results/context-boost-v1/integrity_audit.json": "0cb4713298e8df6c07ec35816e5d78a325f178763e45884242e8213b5d9d72a1"
+    "results/context-boost-v1/integrity_audit.json": "0cb4713298e8df6c07ec35816e5d78a325f178763e45884242e8213b5d9d72a1",
+    "results/route-context-v1/student_test.json": "8180b602dbfdef58a23341a4b2e7805058643c49f2db1f6959d0f8a6b503ba8a",
+    "results/route-context-v1/decoder_selection.json": "9f885a88d876422c4c45205994c19b71a1ce2a51951e83c0889b9a1f9f50760b",
+    "results/route-context-v1/grouped_comparison.json": "5ae10cd5c99145e03562910c683239d608311bead3c6cf325c7f27f10b59a1cb",
+    "results/route-context-v1/api_integration.json": "62436aa699cd7a66175da4ba2999c268b61600f8f28f58654bf042081f5fcfaa",
+    "results/route-context-v1/screenshots/ui_desktop.png": "12c01b43737f847b09349c65f16f7fcdf29ca5bb909b2f3e427b47c587598d70",
+    "results/route-context-v1/screenshots/capture_metadata.json": "08c245a0d1a882ce0155588a86e525b71a167a2837cad48d4fbb29fe7cc27052"
   },
   "team_review_required": true,
   "second_laptop_demo": "pending_without_team_evidence"

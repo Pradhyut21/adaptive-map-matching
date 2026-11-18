@@ -13,7 +13,7 @@ from .scoring import positive_scores
 from .decoder import decode,DecoderConfig,evaluate_continuity
 from .metrics import select_top1
 from . import refined_inputs
-from .decoder_refinement import decode_refined
+from .decoder_refinement import decode_refined, decode_with_previous
 
 @dataclass
 class Prediction:
@@ -42,8 +42,8 @@ def load_artifact(path=None):
     else:
         artifact_path = base_dir / 'final_model.joblib'
     artifact = joblib.load(artifact_path)
-    if artifact['feature_version'] == refined_inputs.VERSION:
-        names, k, radius = refined_inputs.FEATURE_NAMES, refined_inputs.K, refined_inputs.RADIUS
+    if artifact['feature_version'] in refined_inputs.SCHEMAS:
+        names, k, radius = refined_inputs.SCHEMAS[artifact['feature_version']], refined_inputs.K, refined_inputs.RADIUS
         config_path = artifact_path.with_suffix('.config.json')
         # Model selection freezes the decoder too. Missing settings must not
         # silently change the deployed predictions to default parameters.
@@ -52,6 +52,11 @@ def load_artifact(path=None):
             raise ValueError('Context model requires its frozen decoder and refinement settings')
         artifact['decoder_config'] = settings['decoder']
         artifact['decoder_refinement'] = settings['refinement']
+        if artifact['feature_version'] == refined_inputs.ROUTE_VERSION:
+            artifact['previous_weight'] = settings.get('previous_weight', 0.)
+            artifact['preserve_route'] = settings.get('preserve_route', False)
+            if artifact['previous_weight'] or artifact['preserve_route']:
+                artifact['previous_model'] = load_artifact(base_dir / 'context_boost.joblib')['model']
     elif artifact['feature_version'] == FEATURE_VERSION:
         names, k, radius = FEATURE_NAMES, CANDIDATE_K, CANDIDATE_RADIUS
         config_path = base_dir / 'final_config.json'
@@ -72,9 +77,10 @@ def predict_trip(trip_dir,artifact=None,decoder_config=None):
     track=load_observations(trip_dir)
     xy=network.project(track[:,:2])
     loaded=perf_counter()
-    contextual = artifact.get('feature_version') == refined_inputs.VERSION
+    version = artifact.get('feature_version')
+    contextual = version in refined_inputs.SCHEMAS
     if contextual:
-        candidates, X, motion = refined_inputs.context_inputs(network, xy, track[:,2])
+        candidates, X, motion = refined_inputs.context_inputs(network, xy, track[:,2], version)
     else:
         candidates = network.candidates(xy, k=CANDIDATE_K, radius=CANDIDATE_RADIUS)
         X, motion = build_features(network, candidates, xy, track[:,2])
@@ -82,10 +88,20 @@ def predict_trip(trip_dir,artifact=None,decoder_config=None):
     features_done=perf_counter()
     probabilities=np.zeros_like(candidates.distances,dtype=np.float32)
     if candidates.valid.any():probabilities[candidates.valid]=positive_scores(artifact['model'],X[candidates.valid])
+    previous = None
+    if 'previous_model' in artifact:
+        previous = np.zeros_like(probabilities)
+        if candidates.valid.any():
+            previous[candidates.valid] = positive_scores(
+                artifact['previous_model'], X[..., :len(refined_inputs.FEATURE_NAMES)][candidates.valid])
     scored=perf_counter()
     classifier,_=select_top1(candidates.arc_ids,probabilities)
     config = decoder_config or artifact.get('decoder_config')
-    if contextual:
+    if previous is not None:
+        result = decode_with_previous(network, candidates, probabilities, previous, xy, track[:, 2],
+                                      config, artifact['decoder_refinement'], artifact['previous_weight'],
+                                      artifact['preserve_route'])
+    elif contextual:
         result = decode_refined(network, candidates, probabilities, xy, track[:,2],
                                 config=config, refinement=artifact.get('decoder_refinement'))
     else:

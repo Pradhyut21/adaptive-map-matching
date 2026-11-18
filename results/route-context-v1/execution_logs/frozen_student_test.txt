@@ -1,0 +1,11 @@
+00000000 {'previous_model': (0.9521, 0.9297), 'ordered_route_boost': (0.9624, 0.9213)}
+00000007 {'previous_model': (0.8545, 0.9919), 'ordered_route_boost': (0.8597, 0.8811)}
+00000009 {'previous_model': (0.8522, 0.8808), 'ordered_route_boost': (0.9094, 0.7836)}
+00000040 {'previous_model': (0.8511, 0.8454), 'ordered_route_boost': (0.9088, 0.7796)}
+00000052 {'previous_model': (0.9809, 0.9847), 'ordered_route_boost': (0.9924, 0.958)}
+00000056 {'previous_model': (0.8648, 0.8694), 'ordered_route_boost': (0.9144, 0.829)}
+00000065 {'previous_model': (0.806, 0.7474), 'ordered_route_boost': (0.9206, 0.7344)}
+00000076 {'previous_model': (0.889, 0.854), 'ordered_route_boost': (0.9421, 0.8594)}
+00000077 {'previous_model': (0.4426, 0.5178), 'ordered_route_boost': (0.6484, 0.4229)}
+00000091 {'previous_model': (0.7883, 0.8501), 'ordered_route_boost': (0.8993, 0.7803)}
+{'previous_model': (0.7840814196242171, 0.8056367432150313, 0.8790003825066939), 'ordered_route_boost': (0.8641440501043841, 0.7497390396659708, 0.8866511747998967)}

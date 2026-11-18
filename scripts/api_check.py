@@ -34,8 +34,9 @@ def main():
     _,inventory=request(url+'/trips')
     if len(inventory['trips'])!=10:raise AssertionError('Expected all10 runtime trips')
     records=[]
-    refined=health.get('feature_version')=='context-boost-v1'
-    results_dir=ROOT/'results/context-boost-v1' if refined else ROOT/'results'
+    version=health.get('feature_version')
+    refined=version in ('context-boost-v1', 'route-context-v1')
+    results_dir=ROOT/'results'/version if refined else ROOT/'results'
     offline_path=args.evaluation or results_dir/('student_test.json' if refined else 'hmm_comparison.json')
     offline=json.loads(offline_path.read_text()) if offline_path.exists() and inventory['partition']=='student_test' else None
     expected={r['trip_id']:r for r in offline['hmm']['trips']} if offline else {}
@@ -52,6 +53,10 @@ def main():
             record['offline_sequence_lcs_f1_delta']=abs(result['metrics']['sequence_lcs_f1']-saved['sequence_lcs_f1'])
             if delta>1e-12 or record['offline_sequence_lcs_f1_delta']>1e-12:
                 raise AssertionError('Live inference metrics differ from frozen offline evaluation')
+            if version=='route-context-v1':
+                record['offline_legacy_top1_delta']=abs(result['metrics']['legacy_top1_accuracy']-saved['legacy_top1_accuracy'])
+                if record['offline_legacy_top1_delta']>1e-12:
+                    raise AssertionError('Live legacy score differs from frozen offline evaluation')
         records.append(record)
         print(f"HTTP{status} {trip['id']} n={record['observations']} Top1={result['metrics'].get('top1_accuracy')} inference={result['timing']['inference_seconds']:.2f}s run={result['run_id']}",flush=True)
     evidence={'started_utc':started,'url':url,'partition':inventory['partition'],'health':health,'requests':records,'scope':'Same-machine HTTP requests for all ten discovered trips.','second_laptop_demonstrated':False,'all_passed':len(records)==10}

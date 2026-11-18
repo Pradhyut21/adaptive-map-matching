@@ -130,6 +130,9 @@ function renderResult(result) {
   const m = result.metrics || {};
   const continuity = typeof m.route_continuity === "object" && m.route_continuity ? m.route_continuity.value ?? m.route_continuity.continuity : m.route_continuity;
   setText("metricAccuracy", pct(m.top1_accuracy)); setText("metricContinuity", pct(continuity)); setText("metricSequence", numeric(m.sequence_lcs_f1, 3));
+  setText("accuracyBasis", Number.isFinite(m.legacy_top1_accuracy)
+    ? `Full-route labels · earlier labels ${pct(m.legacy_top1_accuracy)}`
+    : "Against derived reference labels");
   const seconds = result.timing?.inference_seconds;
   setText("metricTime", Number.isFinite(seconds) ? `${seconds.toFixed(2)} s` : "—");
   setText("detailTrip", result.trip_id); setText("detailModel", result.model_name); setText("detailObservations", numberFormat.format(result.raw_gps.length));

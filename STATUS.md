@@ -1,6 +1,6 @@
 # PathSnap execution status
 
-The refined Histogram Gradient Boosting classifier and decoder completed the frozen offline evaluation across all ten student-test trips. The physical two-laptop demonstration and receiving-terminal screenshot are pending. The team will run those checks later.
+The full-route boost blend is active. On the same student-test points and full-route reference labels, it improved from 78.41% to 86.41% exact Top-1. It reached 74.97% with the earlier labels versus 80.56% for the previous model. Ordered arc LCS F1 rose from 0.8790 to 0.8867 and strict continuity fell from 98.80% to 98.27%. See [paired results](results/route-context-v1/student_test.json) and [peer review](docs/peer_approach.md). The physical two-laptop demonstration and receiving-terminal screenshot are pending.
 
 ## Data and features
 
@@ -24,11 +24,13 @@ The refined Histogram Gradient Boosting classifier and decoder completed the fro
 | Tuned Extra Trees | 71.66% | 92.57% | 0.4765 |
 | Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 |
 | Refined boosting classifier | 73.71% | — | — |
-| **Refined boosting + decoder (active)** | **80.56%** | **98.80%** | **0.8790** |
+| **Previous refined boosting + decoder** | **80.56%** | **98.80%** | **0.8790** |
 
 The original HMM improved Top-1 over the Extra Trees classifier on eight trips and reduced it on `00000000` and `00000007`. The refined model and decoder improved over the original HMM on all ten trips. Exact matches increased from 14,587 to 15,436 of 19,160 observations (+4.43 percentage points). Candidate misses decreased from 890 to 300. Feasible transitions decreased from 19,124 to 18,920 of 19,149 eligible pairs, with one time gap excluded in both runs. The ordered-sequence LCS F1 improved to 0.8790. These metrics describe agreement with the frozen approximate labels on the student-test trips. See `results/hmm_comparison.json`, `results/predictions/HMM/` and `results/context-boost-v1/student_test.json`.
 
 ## Local verification and deliverables
+
+- The active matcher passed 51 unit and API tests. All ten genuine predictions from the host's Wi-Fi address returned 200 and exactly reproduced both offline Top-1 measures and the route LCS F1. The live desktop and mobile run had no page errors or horizontal overflow. See `results/route-context-v1/`. The separate-device test needs a client on Laptop 2.
 
 - All 49 behavior and API tests passed in `results/context-boost-v1/unit_tests.txt`, including the new contextual features, frozen artifact selection and decoder edge cases.
 - All ten refined-model live HTTP predictions returned 200. Each trip's Top-1 and ordered-sequence LCS F1 exactly matched its frozen offline result. Full inference took 1.00–22.05 seconds per trip on the test machine. Reference routes and per-point labels remained on the server. See `results/context-boost-v1/api_integration.json` and `results/context-boost-v1/execution_logs/actual_api_server.txt`. Original Extra Trees evidence remains separately in `results/`.

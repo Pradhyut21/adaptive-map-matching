@@ -6,6 +6,15 @@ This repository was implemented with AI assistance. Every team member must revie
 
 ## Executed results
 
+The active matcher combines two fitted Histogram Gradient Boosting variants with a distance prior and a U-turn penalty. Both configurations were chosen on training trips. Each row below uses the same 19,160 student-test observations.
+
+| Pipeline | Full-route label Top-1 | Earlier label Top-1 | Ordered-sequence LCS F1 | Directed continuity |
+|---|---:|---:|---:|---:|
+| Previous contextual boosting + decoder | 78.41% | 80.56% | 0.8790 | 98.80% |
+| Active full-route boosting blend + decoder | **86.41%** | 74.97% | **0.8867** | 98.27% |
+
+The full-route method derives reference arcs with a global monotone alignment. The two methods assign different labels to 5,011 observations. All 19,160 points, including 25 whose full-route labels are more than 60 m from the GPS fix, stay in both denominators. The API displays both scores. See the [peer review and paired results](docs/peer_approach.md).
+
 Measured across all ten student-testing trips (19,160 observations), using approximate reference-aligned point labels:
 
 | Method | Exact arc Top-1 | Directed continuity | Ordered-sequence LCS F1 | Candidate misses |
@@ -14,9 +23,9 @@ Measured across all ten student-testing trips (19,160 observations), using appro
 | Tuned Extra Trees | 71.66% | 92.57% | 0.4765 | 4.65% |
 | Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 | 4.65% |
 | Refined boosting classifier | 73.71% | — | — | 1.57% |
-| **Refined boosting + decoder (active)** | **80.56%** | **98.80%** | **0.8790** | **1.57%** |
+| **Previous refined boosting + decoder** | **80.56%** | **98.80%** | **0.8790** | **1.57%** |
 
-The active configuration correctly matched **15,436 of 19,160** observations, up from 14,587 with the original Extra Trees HMM (**+4.43 percentage points**). Each of the ten trips improved. Candidate misses fell from 890 to 300 out of 19,160 observations. Directed continuity fell from 19,124 to 18,920 successes among 19,149 eligible adjacent pairs. Both runs excluded the same one reported time gap from continuity. Ordered-sequence LCS F1 rose from 0.7946 to 0.8790. See [`student_test.json`](results/context-boost-v1/student_test.json) and [`hmm_comparison.json`](results/hmm_comparison.json).
+The previous refinement correctly matched **15,436 of 19,160** observations using the earlier label method, up from 14,587 with the original Extra Trees HMM (**+4.43 percentage points**). Each of the ten trips improved. Candidate misses fell from 890 to 300 out of 19,160 observations. Directed continuity fell from 19,124 to 18,920 successes among 19,149 eligible adjacent pairs. Both runs excluded the same one reported time gap from continuity. Ordered-sequence LCS F1 rose from 0.7946 to 0.8790. See [`student_test.json`](results/context-boost-v1/student_test.json) and [`hmm_comparison.json`](results/hmm_comparison.json).
 
 The original comparison used all 80 training trips and three grouped folds across five algorithms. Its eight TPE trials (three startup, five guided) improved Extra Trees mean CV Top-1 from 58.84% to 59.53%. Student-test Top-1 improved from 70.61% to 71.66%, while binary log loss increased from 0.2081 to 0.2097. The original model, predictions and comparisons are retained.
 
@@ -24,7 +33,7 @@ The refinement reused Histogram Gradient Boosting with 20 candidates and 28 GPS 
 
 With the two heading reliability features, the selected classifier scored 59.53% mean grouped-CV Top-1 and 71.66% student-test Top-1. Removing them gave 57.19% and 68.25%, respectively. The reference-label alignment also uses heading. Run `python -m scripts.ablation` after tuning to reproduce this comparison.
 
-All ten live HTTP requests for the active refined artifact returned 200 and exactly reproduced the frozen offline Top-1 and ordered-sequence LCS F1. Full inference took 1.00–22.05 seconds per trip on this machine, excluding reference evaluation. All 49 behavior and API tests passed. Updated desktop and mobile browser captures had no JavaScript errors or horizontal overflow. See `results/context-boost-v1/api_integration.json`, `results/context-boost-v1/unit_tests.txt`, and `results/context-boost-v1/screenshots/capture_metadata.json`. Original Extra Trees evidence remains separately under `results/`. The physical two-laptop demonstration and receiving-terminal screenshot are pending.
+All 51 behavior and API tests passed with the active artifact. All ten live HTTP predictions over the host's Wi-Fi address exactly reproduced the frozen full-route Top-1, earlier-label Top-1, and sequence LCS F1. Desktop and mobile browser captures had no JavaScript errors or horizontal overflow. Evidence is under `results/route-context-v1/`. The physical two-laptop demonstration and receiving-terminal screenshot are pending.
 
 ## Setup
 
@@ -75,6 +84,14 @@ python -m scripts.refine_accuracy test --threads 2
 
 The tuning stage reuses the recorded SQLite study in `results/context-boost-v1/`. Calibration selects decoder settings on the same 16 deterministically sampled training trips and restores any missing out-of-fold predictions by refitting the corresponding training folds. The `--threads` option controls model fitting and scoring. Run `python -m scripts.api_check` with the active service running to compare live and offline results.
 
+After the earlier refinement commands above are complete, run the paired alignment experiment and select the final decoder using only training trips.
+
+```powershell
+python -m scripts.compare_route_alignment
+python -m scripts.validate_route_decoder select
+python -m scripts.validate_route_decoder benchmark
+```
+
 ## Run Laptop 1 (backend)
 
 ```powershell
@@ -83,7 +100,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info
 
 Open `http://127.0.0.1:8000` for a same-machine check. The UI and API may run from this one process, but the required final deployment uses a second laptop. `GET /health`, `GET /trips` and `POST /predict` perform real inference. A request body is `{"trip_id":"00000000"}` using an ID actually returned by `/trips`.
 
-`artifacts/active_model.json` selects `artifacts/context_boost.joblib` and its companion `context_boost.config.json`. To reproduce the original Extra Trees service, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/final_model.joblib).Path` before starting Uvicorn.
+`artifacts/active_model.json` selects `artifacts/ordered_route_boost.joblib` and its companion settings, which use `artifacts/context_boost.joblib` for the second set of candidate scores. To reproduce the earlier service, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/context_boost.joblib).Path` before starting Uvicorn. Use `artifacts/final_model.joblib` for the original Extra Trees service.
 
 ## Run Laptop 2 (UI)
 

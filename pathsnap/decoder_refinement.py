@@ -20,6 +20,9 @@ class RefinementConfig:
     smooth_projections: bool = False
     emission_temperature: float = 1.0
     realign_predicted_route: bool = False
+    distance_prior_sigma_m: float = 0.0
+    max_states: int = 0
+    route_assignment_classifier_weight: float = 0.15
 
     def __post_init__(self):
         if not math.isfinite(self.same_arc_jitter_m) or not 0 <= self.same_arc_jitter_m <= 15:
@@ -30,6 +33,12 @@ class RefinementConfig:
             raise ValueError("smoothing_fraction must be between 0 and 1")
         if not math.isfinite(self.emission_temperature) or self.emission_temperature <= 0:
             raise ValueError("emission_temperature must be finite and positive")
+        if not math.isfinite(self.distance_prior_sigma_m) or self.distance_prior_sigma_m < 0:
+            raise ValueError("distance prior sigma must be finite and nonnegative")
+        if not isinstance(self.max_states, int) or self.max_states < 0:
+            raise ValueError("max_states must be a nonnegative integer")
+        if not math.isfinite(self.route_assignment_classifier_weight) or self.route_assignment_classifier_weight < 0:
+            raise ValueError("route assignment classifier weight must be finite and nonnegative")
 
 
 def smooth_trajectory(xy, timestamps, gap_seconds, half_window, fraction):
@@ -198,7 +207,8 @@ def _align_run(network, candidates, probabilities, xy, timestamps, heading, reli
             angle = np.arctan2(vector[:, 1], vector[:, 0]) - heading[row]
         angular_error = np.abs(np.arctan2(np.sin(angle), np.cos(angle)))
         emission = -(candidates.distances[row, col] / 20) ** 2 - 1.5 * reliability[row] * angular_error
-        emission += 0.15 * np.log(np.clip(probabilities[row, col], config.probability_floor, 1))
+        emission += refinement.route_assignment_classifier_weight * np.log(
+            np.clip(probabilities[row, col], config.probability_floor, 1))
         emission -= np.abs(cumulative[expected] - cumulative[pos]) / 200
         if row == first_row:
             score = emission
@@ -251,17 +261,37 @@ def realign_route_points(network, candidates, probabilities, xy, timestamps,
 
 
 def decode_refined(network, candidates, probabilities, track_xy, timestamps,
-                   config=None, refinement=None):
+                   config=None, refinement=None, realignment_probabilities=None):
     """Decode using bounded projection-noise tolerance and optional smoothing."""
     started = perf_counter()
     cfg = DecoderConfig(**config) if isinstance(config, dict) else config or DecoderConfig()
     tweak = RefinementConfig(**refinement) if isinstance(refinement, dict) else refinement or RefinementConfig()
     view, adjusted, xy = refinement_inputs(network, candidates, track_xy, timestamps, cfg, tweak)
-    classifier_probabilities = probabilities
+    classifier_probabilities = probabilities if realignment_probabilities is None else realignment_probabilities
     if tweak.emission_temperature != 1.0:
         potentials = np.clip(np.nan_to_num(probabilities, nan=0, posinf=1, neginf=0), cfg.probability_floor, 1)
         probabilities = potentials ** (1 / tweak.emission_temperature)
-    result = decode(view, adjusted, probabilities, xy, timestamps, config=cfg)
+    if tweak.distance_prior_sigma_m:
+        log_scores = np.log(np.clip(probabilities, cfg.probability_floor, 1.0))
+        log_scores -= 0.5 * np.square(adjusted.distances / tweak.distance_prior_sigma_m)
+        row_max = np.max(log_scores, axis=1, keepdims=True, initial=-np.inf)
+        probabilities = np.exp(log_scores - np.where(np.isfinite(row_max), row_max, 0.0))
+    columns = None
+    trellis = adjusted
+    if 0 < tweak.max_states < adjusted.arc_ids.shape[1]:
+        ranked = np.where(adjusted.valid, probabilities, -1.0)
+        columns = np.argsort(-ranked, axis=1, kind="stable")[:, :tweak.max_states]
+        rows = np.arange(len(columns))[:, None]
+        trellis = replace(adjusted, arc_ids=adjusted.arc_ids[rows, columns],
+                          distances=adjusted.distances[rows, columns], fractions=adjusted.fractions[rows, columns],
+                          xy=adjusted.xy[rows, columns])
+        probabilities = probabilities[rows, columns]
+    result = decode(view, trellis, probabilities, xy, timestamps, config=cfg)
+    if columns is not None:
+        selected = result.candidate_indices.copy()
+        valid = selected >= 0
+        selected[valid] = columns[np.flatnonzero(valid), selected[valid]]
+        result = replace(result, candidate_indices=selected)
     if tweak.realign_predicted_route:
         result = realign_route_points(network, adjusted, classifier_probabilities,
                                       xy, timestamps, result, cfg, tweak)
@@ -269,3 +299,18 @@ def decode_refined(network, candidates, probabilities, track_xy, timestamps,
     result.stats["viterbi_seconds"] = result.stats["inference_seconds"]
     result.stats["inference_seconds"] = perf_counter() - started
     return result
+
+
+def combine_scores(current, previous, previous_weight):
+    """Geometric blend that preserves relative candidate emission scores."""
+    return np.maximum(current, 1e-8) ** (1 - previous_weight) * np.maximum(previous, 1e-8) ** previous_weight
+
+
+def decode_with_previous(network, candidates, current, previous, xy, times,
+                         config, refinement, previous_weight, preserve_route):
+    """Use both boosters for routing, or use the new scores on the previous path."""
+    if preserve_route:
+        return decode_refined(network, candidates, previous, xy, times, config, refinement,
+                              realignment_probabilities=current)
+    scores = combine_scores(current, previous, previous_weight) if previous_weight else current
+    return decode_refined(network, candidates, scores, xy, times, config, refinement)

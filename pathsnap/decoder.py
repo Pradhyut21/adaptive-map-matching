@@ -29,6 +29,8 @@ class DecoderConfig:
     cache_max: int = 512
     distance_bucket_m: float = 250.0
     probability_floor: float = 1e-8
+    uturn_penalty: float = 0.0
+    hard_speed_limit: bool = False
 
     def __post_init__(self):
         if self.beta <= 0 or self.max_speed <= 0 or self.gap_seconds <= 0:
@@ -41,6 +43,8 @@ class DecoderConfig:
             raise ValueError("max_route_m must be >= min_route_m")
         if not 0 < self.probability_floor < 0.5:
             raise ValueError("probability_floor must lie between 0 and 0.5")
+        if not math.isfinite(self.uturn_penalty) or self.uturn_penalty < 0:
+            raise ValueError("U-turn penalty must be finite and nonnegative")
 
 
 @dataclass
@@ -305,6 +309,14 @@ def decode(network, candidates, probabilities, track_xy, timestamps,
             speeds = distances / elapsed
             transition -= cfg.speed_penalty_weight * np.maximum(speeds / cfg.max_speed - 1.0, 0.0) ** 2
         transition[~np.isfinite(distances)] = -np.inf
+        if cfg.hard_speed_limit:
+            transition[speeds > cfg.max_speed] = -np.inf
+        if cfg.uturn_penalty:
+            prev = network.arcs[np.where(valid[t - 1], arcs[t - 1], 0)]
+            curr = network.arcs[np.where(valid[t], arcs[t], 0)]
+            reverse = (prev[:, 0, None] == curr[None, :, 1]) & (prev[:, 1, None] == curr[None, :, 0])
+            reverse &= arcs[t - 1, :, None] != arcs[t, None, :]
+            transition[reverse] -= cfg.uturn_penalty
         scores = previous_scores[:, None] + transition
         best = np.argmax(scores, axis=0)
         new_scores = emission[t] + scores[best, np.arange(k)]

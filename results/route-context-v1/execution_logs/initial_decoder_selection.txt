@@ -1,0 +1,17 @@
+00000029 {'previous_model': 0.8349, 'new_model_previous_decoder': 0.8595, 'distance_and_turn': 0.8622, 'distance_and_turn_realign': 0.8568, 'distance_turn_speed': 0.8731}
+00000011 {'previous_model': 0.9685, 'new_model_previous_decoder': 0.9813, 'distance_and_turn': 0.9827, 'distance_and_turn_realign': 0.983, 'distance_turn_speed': 0.9806}
+00000003 {'previous_model': 0.5615, 'new_model_previous_decoder': 0.6151, 'distance_and_turn': 0.6054, 'distance_and_turn_realign': 0.6102, 'distance_turn_speed': 0.5834}
+00000088 {'previous_model': 0.7888, 'new_model_previous_decoder': 0.8813, 'distance_and_turn': 0.879, 'distance_and_turn_realign': 0.8858, 'distance_turn_speed': 0.8664}
+00000037 {'previous_model': 0.9247, 'new_model_previous_decoder': 0.9764, 'distance_and_turn': 0.9734, 'distance_and_turn_realign': 0.9778, 'distance_turn_speed': 0.966}
+00000053 {'previous_model': 0.9394, 'new_model_previous_decoder': 0.977, 'distance_and_turn': 0.9839, 'distance_and_turn_realign': 0.9778, 'distance_turn_speed': 0.9693}
+00000032 {'previous_model': 0.9343, 'new_model_previous_decoder': 0.942, 'distance_and_turn': 0.9428, 'distance_and_turn_realign': 0.9432, 'distance_turn_speed': 0.608}
+00000026 {'previous_model': 0.892, 'new_model_previous_decoder': 0.9529, 'distance_and_turn': 0.928, 'distance_and_turn_realign': 0.9529, 'distance_turn_speed': 0.9335}
+00000089 {'previous_model': 0.7923, 'new_model_previous_decoder': 0.8941, 'distance_and_turn': 0.8958, 'distance_and_turn_realign': 0.8998, 'distance_turn_speed': 0.8762}
+00000070 {'previous_model': 0.6339, 'new_model_previous_decoder': 0.7172, 'distance_and_turn': 0.7394, 'distance_and_turn_realign': 0.7259, 'distance_turn_speed': 0.592}
+00000095 {'previous_model': 0.6273, 'new_model_previous_decoder': 0.8079, 'distance_and_turn': 0.882, 'distance_and_turn_realign': 0.882, 'distance_turn_speed': 0.7647}
+00000035 {'previous_model': 0.7176, 'new_model_previous_decoder': 0.801, 'distance_and_turn': 0.8113, 'distance_and_turn_realign': 0.8071, 'distance_turn_speed': 0.8089}
+00000098 {'previous_model': 0.9715, 'new_model_previous_decoder': 0.9817, 'distance_and_turn': 0.9817, 'distance_and_turn_realign': 0.9823, 'distance_turn_speed': 0.9792}
+00000031 {'previous_model': 0.711, 'new_model_previous_decoder': 0.7665, 'distance_and_turn': 0.7908, 'distance_and_turn_realign': 0.7892, 'distance_turn_speed': 0.7503}
+00000068 {'previous_model': 0.8835, 'new_model_previous_decoder': 0.9371, 'distance_and_turn': 0.9357, 'distance_and_turn_realign': 0.9371, 'distance_turn_speed': 0.9357}
+00000038 {'previous_model': 0.7786, 'new_model_previous_decoder': 0.8749, 'distance_and_turn': 0.8834, 'distance_and_turn_realign': 0.8842, 'distance_turn_speed': 0.8796}
+previous_model: original 82.76%, selected 82.76%

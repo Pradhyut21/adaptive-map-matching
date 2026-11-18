@@ -25,6 +25,7 @@ from pathsnap.metrics import METRIC_DEFINITIONS
 RESULTS=ROOT/"results"
 FIGURES=RESULTS/"figures"
 REFINEMENT_RESULTS=RESULTS/"context-boost-v1"
+ROUTE_RESULTS=RESULTS/"route-context-v1"
 
 REFINEMENT_RECIPE_LABELS={
     "context_standard":"Unweighted",
@@ -337,6 +338,37 @@ def add_accuracy_refinement(report, records, original, models):
         report.p("Actual same-machine browser inference using the refined Histogram Gradient Boosting model. Ten HTTP checks exactly reproduced the frozen Top-1 and sequence scores. This does not establish the pending physical two-laptop demonstration.", "SmallText")
 
 
+def add_route_alignment_comparison(report, student, selection, grouped, live):
+    report.page()
+    report.heading("9. Full-route reference alignment and validation")
+    report.p('The peer project reports 95.44% directed-arc Top-1 on 19,135 labeled observations. It derives labels by aligning each fix to the full ordered route and omits 25 fixes beyond its alignment threshold. PathSnap retains all 19,160 observations under both reference-label methods. <link href="https://github.com/Shriya-sr/ML-Hackathon/blob/cb628ce9ffd4129d7045edf1f1a91c44bddb07b7/experiments/results/decoder_summary.json" color="#075663">Peer experiment record</link>.')
+    report.p("The independent alignment minimizes capped GPS distance and direction disagreement over the full reference sequence. It keeps repeated arc occurrences distinct, allows position jitter within an arc, and retains distant fixes for evaluation. The new gradient booster learns from nearby candidate roads and adds fit across neighboring GPS fixes and local graph topology. The prediction path receives no reference-route data.")
+    rows=[["Training-fold classifier", "Full-route labels (all points)", "Earlier labels (all points)"]]
+    folds=grouped["folds"]
+    count=sum(row["observations"] for row in folds)
+    for key,name in (("old","Previous booster"),("new","Booster trained with full-route labels")):
+        rows.append([name,percentage(sum(row[key+"_ordered"] for row in folds)/count),
+                     percentage(sum(row[key+"_legacy"] for row in folds)/count)])
+    report.table(rows,[345,190,190])
+    report.p(f"Training classifier results pool {count:,} observations across the same three grouped folds. All folds were disjoint by trip. Final decoder selection used {len(selection['training_trips'])} fixed training trips and out-of-fold candidate scores. The selected recipe was {escape(selection['selected'].replace('_',' '))}.", "SmallText")
+    rows=[["Frozen student-test pipeline", "Full-route Top-1", "Earlier-label Top-1", "Ordered LCS F1", "Directed continuity"]]
+    for key,val in student["comparisons"].items():
+        name="Previous booster + decoder" if key=="previous_model" else "Full-route booster + decoder"
+        rows.append([name,percentage(val["top1_accuracy"]),percentage(val["legacy_top1_accuracy"]),
+                     number(val["sequence_lcs_f1"]),percentage(val["route_continuity"])])
+    report.table(rows,[250,115,125,115,120])
+    active=student["hmm"]
+    report.p(f"The two alignment algorithms assign different arc labels to {active['label_changes']:,} of the {active['observations']:,} student-test observations. The table shows each pipeline under both label sets. Ordered LCS F1 compares reconstructed and supplied arc sequences directly. The student-test trips are a reused benchmark.", "SmallText")
+    if live and live.get("all_passed"):
+        report.p(f"All {len(live['requests'])} HTTP predictions reproduced the full-route and earlier-label Top-1 and ordered LCS F1. The recorded LAN-address browser checks ran on the backend host.", "SmallText")
+    screenshot=ROUTE_RESULTS/"screenshots/ui_desktop.png"
+    if screenshot.is_file():
+        report.page()
+        report.subheading("Active model - live LAN-address browser check")
+        report.image(screenshot,max_height=386)
+        report.p("A browser on the backend host loaded the frontend from a separate HTTP origin and sent a real inference request to the Wi-Fi address. Both reference alignment scores are displayed. The physical second-laptop run is pending.", "SmallText")
+
+
 def build_report():
     _,models=model_records()
     eda=load_json(RESULTS/"eda"/"summary.json")
@@ -347,6 +379,10 @@ def build_report():
     ablation=load_json(RESULTS/"ablation.json",False)
     capture=load_json(RESULTS/"screenshots"/"capture_metadata.json",False)
     refinement=load_refinement_evidence()
+    route_records={name:load_json(ROUTE_RESULTS/f"{name}.json",False) for name in
+                   ("student_test","decoder_selection","grouped_comparison","api_integration")}
+    has_route_results=all(route_records[name] is not None for name in
+                          ("student_test","decoder_selection","grouped_comparison"))
     make_comparison_plots(models,tuning,hmm)
     r=Report()
     r.p("PathSnap Trace-Lite","CoverTitle")
@@ -367,6 +403,9 @@ def build_report():
         item=refinement["student_test"]["hmm"]
         summary_rows.append(["Accuracy refinement + decoder",percentage(item["top1_accuracy"]),percentage(item.get("route_continuity")),number(item.get("sequence_lcs_f1"))])
     r.table(summary_rows,[220,160,155,190])
+    if has_route_results:
+        row=route_records["student_test"]["hmm"]
+        r.p(f"Section 9 compares the full-route alignment results under both reference-label methods. The selected run reached {percentage(row['top1_accuracy'])} on full-route labels, {percentage(row['legacy_top1_accuracy'])} on earlier labels, and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])}.")
     if api and api.get("requests"):
         passed=sum(request.get("http_status")==200 for request in api["requests"])
         r.p(f"The original artifact's local HTTP check returned {passed} successful predictions from {len(api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
@@ -516,6 +555,9 @@ def build_report():
             r.p("The server log viewer displays the stored request record from the browser run. The report archive also contains the server's original text log.","SmallText")
         r.p("The receiving-terminal screenshot remains pending until the physical demonstration.","SmallText")
     if refinement is not None:add_accuracy_refinement(r,refinement,hmm,models)
+    if has_route_results:
+        add_route_alignment_comparison(r,route_records["student_test"],route_records["decoder_selection"],
+                                       route_records["grouped_comparison"],route_records["api_integration"])
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
     r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
@@ -534,6 +576,10 @@ def build_report():
     if refinement is not None:
         source_files.extend(REFINEMENT_RESULTS/f"{name}.json" for name,record in refinement.items() if record is not None)
         source_files.extend(path for path in (REFINEMENT_RESULTS/"screenshots/ui_desktop.png", REFINEMENT_RESULTS/"screenshots/capture_metadata.json", REFINEMENT_RESULTS/"integrity_audit.json") if path.is_file())
+    if has_route_results:
+        source_files.extend(ROUTE_RESULTS/f"{name}.json" for name,record in route_records.items() if record is not None)
+        source_files.extend(path for path in (ROUTE_RESULTS/"screenshots/ui_desktop.png",
+                                              ROUTE_RESULTS/"screenshots/capture_metadata.json") if path.is_file())
     manifest={
         "report":target.relative_to(ROOT).as_posix(),
         "generated_ist":now.isoformat(),

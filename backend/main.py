@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,Field
 from pathsnap.settings import ROOT,DATA_ROOT,trip_dirs
 from pathsnap.predict import load_artifact,predict_trip
+from pathsnap.refined_inputs import ROUTE_VERSION
 from .evaluator import evaluate_prediction
 
 logger=logging.getLogger('pathsnap.api')
@@ -101,7 +102,7 @@ def predict(request:PredictionRequest):
             reference_root=Path(os.environ.get('PATHSNAP_REFERENCE_ROOT',DATA_ROOT))
             reference_trip=reference_root/partition/request.trip_id
             if (reference_trip/f'{request.trip_id}.route').exists():
-                metrics=evaluate_prediction(prediction,reference_trip)
+                metrics=evaluate_prediction(prediction,reference_trip,ordered_alignment=MODEL.get('feature_version')==ROUTE_VERSION)
             else:
                 metrics={'prediction_coverage':float((prediction.decoded.arc_ids>=0).mean()),'reference_label_note':'Reference unavailable; accuracy metrics not computed.'}
             evaluation_seconds=time.perf_counter()-evaluated
