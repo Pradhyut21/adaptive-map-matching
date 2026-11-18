@@ -8,19 +8,23 @@ This repository was implemented with AI assistance. Every team member must revie
 
 Measured across all ten student-testing trips (19,160 observations), using approximate reference-aligned point labels:
 
-| Method | Observation Top-1 | Directed continuity | Ordered-sequence LCS F1 |
-|---|---:|---:|---:|
-| Nearest road | 42.96% | 75.58% | 0.2984 |
-| Tuned Extra Trees | 71.66% | 92.57% | 0.4765 |
-| Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 |
+| Method | Exact arc Top-1 | Directed continuity | Ordered-sequence LCS F1 | Candidate misses |
+|---|---:|---:|---:|---:|
+| Nearest road | 42.96% | 75.58% | 0.2984 | 4.65% |
+| Tuned Extra Trees | 71.66% | 92.57% | 0.4765 | 4.65% |
+| Tuned Extra Trees + HMM | 76.13% | 99.87% | 0.7946 | 4.65% |
+| Refined boosting classifier | 73.71% | — | — | 1.57% |
+| **Refined boosting + decoder (active)** | **80.56%** | **98.80%** | **0.8790** | **1.57%** |
 
-HMM improved pointwise accuracy on eight trips and reduced it on two. All points remain in the accuracy denominator; the continuity result retains 25 unreachable transitions as failures and excludes one explicitly reported time gap. Candidate miss rate is 4.65% on these student trips. These are project diagnostics, not scores on the reserved evaluator partition.
+The active configuration correctly matched **15,436 of 19,160** observations, up from 14,587 with the original Extra Trees HMM (**+4.43 percentage points**). Each of the ten trips improved. Candidate misses fell from 890 to 300 out of 19,160 observations. Directed continuity fell from 19,124 to 18,920 successes among 19,149 eligible adjacent pairs. Both runs excluded the same one reported time gap from continuity. Ordered-sequence LCS F1 rose from 0.7946 to 0.8790. See [`student_test.json`](results/context-boost-v1/student_test.json) and [`hmm_comparison.json`](results/hmm_comparison.json).
 
-The five-algorithm comparison used all 80 training trips and three grouped folds. Eight TPE trials (three startup, five guided) improved selected-model mean CV Top-1 from 58.84% to 59.53%. Student-test Top-1 improved from 70.61% to 71.66%, while binary log loss worsened slightly from 0.2081 to 0.2097. Both results are retained.
+The original comparison used all 80 training trips and three grouped folds across five algorithms. Its eight TPE trials (three startup, five guided) improved Extra Trees mean CV Top-1 from 58.84% to 59.53%. Student-test Top-1 improved from 70.61% to 71.66%, while binary log loss increased from 0.2081 to 0.2097. The original model, predictions and comparisons are retained.
+
+The refinement reused Histogram Gradient Boosting with 20 candidates and 28 GPS and road geometry features. It compared standard and confidence-weighted variants on the same three training folds. Six TPE trials (three startup, three guided) raised the best mean grouped-fold Top-1 from 62.24% to 62.61%. These scores guided model and hyperparameter selection on reused folds. The selected classifier was refit on all 80 training trips. Decoder settings were selected at 79.07% pooled exact Top-1 on 30,651 observations from 16 training trips using out-of-fold classifier predictions. The refinements were frozen before this run scored the ten student-test trips against the original labels. The earlier boosting model's 90.78% binary candidate-row accuracy includes true negatives. Its comparable exact arc Top-1 was 69.35%.
 
 With the two heading reliability features, the selected classifier scored 59.53% mean grouped-CV Top-1 and 71.66% student-test Top-1. Removing them gave 57.19% and 68.25%, respectively. The reference-label alignment also uses heading. Run `python -m scripts.ablation` after tuning to reproduce this comparison.
 
-All ten genuine live HTTP requests passed and matched offline Top-1 exactly. Observed full inference times were 0.32–7.82 seconds, excluding the separate reference evaluation. All 39 behavior/API tests passed. Desktop and mobile browser captures had no JavaScript errors or horizontal overflow. See `results/api_integration.json`, `results/unit_tests.txt`, and `results/screenshots/capture_metadata.json`. The physical two-laptop demonstration and receiving-terminal screenshot are pending; the user will perform that check later.
+All ten live HTTP requests for the active refined artifact returned 200 and exactly reproduced the frozen offline Top-1 and ordered-sequence LCS F1. Full inference took 1.00–22.05 seconds per trip on this machine, excluding reference evaluation. All 49 behavior and API tests passed. Updated desktop and mobile browser captures had no JavaScript errors or horizontal overflow. See `results/context-boost-v1/api_integration.json`, `results/context-boost-v1/unit_tests.txt`, and `results/context-boost-v1/screenshots/capture_metadata.json`. Original Extra Trees evidence remains separately under `results/`. The physical two-laptop demonstration and receiving-terminal screenshot are pending.
 
 ## Setup
 
@@ -58,6 +62,19 @@ Preparation caches features once per trip, verifies source/configuration/code fi
 
 Model selection uses mean grouped-CV observation Top-1 accuracy. TPE tuning uses three startup trials followed by guided trials, with a persistent SQLite study. Tuned and untuned models are both retained; the final artifact is selected using grouped CV, not evaluator outcomes. `results/execution_manifest.json` records runtime versions, seed, source commit and trip IDs.
 
+After the original features and folds are prepared, reproduce the accuracy refinement in order:
+
+```powershell
+python -m scripts.refine_accuracy prepare
+python -m scripts.refine_accuracy validate --threads 2
+python -m scripts.refine_accuracy tune --threads 2 --trials 6
+python -m scripts.refine_accuracy refit --threads 2
+python -m scripts.refine_accuracy calibrate --holdout-trips 16 --threads 2
+python -m scripts.refine_accuracy test --threads 2
+```
+
+The tuning stage reuses the recorded SQLite study in `results/context-boost-v1/`. Calibration selects decoder settings on the same 16 deterministically sampled training trips and restores any missing out-of-fold predictions by refitting the corresponding training folds. The `--threads` option controls model fitting and scoring. Run `python -m scripts.api_check` with the active service running to compare live and offline results.
+
 ## Run Laptop 1 (backend)
 
 ```powershell
@@ -65,6 +82,8 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info
 ```
 
 Open `http://127.0.0.1:8000` for a same-machine check. The UI and API may run from this one process, but the required final deployment uses a second laptop. `GET /health`, `GET /trips` and `POST /predict` perform real inference. A request body is `{"trip_id":"00000000"}` using an ID actually returned by `/trips`.
+
+`artifacts/active_model.json` selects `artifacts/context_boost.joblib` and its companion `context_boost.config.json`. To reproduce the original Extra Trees service, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/final_model.joblib).Path` before starting Uvicorn.
 
 ## Run Laptop 2 (UI)
 
@@ -85,21 +104,24 @@ When the organizers supply the reserved runtime data, set `PATHSNAP_DATA` to its
 ## Measurements and limitations
 
 - `.route` is an ordered arc sequence, not a point-label file. Training/evaluation point labels are derived with monotone sparse alignment preserving repeated route occurrences. Alignment uses distance and a small reliable-heading term, so pointwise evaluation shares modeling assumptions with the features. Failed alignment uses a logged nearest-reference fallback; ambiguous and poor fits are recorded. Sequence comparison is complementary evidence.
-- Candidate generation uses at most ten arcs within 250 m (empty queries may expand to 300 m). The radius was increased after a training-only coverage experiment; remaining candidate misses stay Top-1 failures.
+- Candidate generation keeps up to 20 arcs for the active model and ten for the original model, with a 250 m initial search and a 300 m retry for empty queries. Refined features use GPS and road geometry. Training confidence weights use the known training labels and alignment diagnostics only during fitting.
 - Most observations are 1 Hz, but large gaps and disconnected roads exist. The decoder uses explicit restarts and reconstructs intermediate arcs only when directed routing supports them.
 - Motion heading uses a symmetric four-sample span, so this is offline route reconstruction. A score margin is an ambiguity indicator, not calibrated probability that the route is correct.
-- Candidate F1 and log loss score candidate rows; observation Top-1 scores all GPS points. Route continuity counts unreachable/missing transitions as failures and reports excluded exogenous time gaps. Exact ordered LCS F1 compares reconstructed arc sequences. See `results/metric_definitions.json`; these diagnostics are not an invented official scoring formula.
+- Candidate F1 and log loss score candidate rows. Observation Top-1 divides correct exact directed-arc predictions by all GPS points, including candidate misses and missing predictions. Candidate misses count observations whose aligned reference arc is absent. Continuity divides feasible transitions by all eligible adjacent pairs, including missing or unreachable predictions, and reports excluded exogenous time gaps. Sequence LCS F1 divides twice the total matched subsequence length by the total predicted and reference arc counts. See `results/metric_definitions.json`.
+- The refined comparison uses frozen, approximate student-test labels. The student-test partition had already been examined for the original run. The measured gain describes these ten trips, and reserved evaluator performance awaits the organizer-provided data.
 - Classifier timings in model comparison exclude feature preparation and graph loading. The API separately measures the full inference pipeline and reference evaluation.
 - Same-machine HTTP checks and browser screenshots do not establish a second-laptop LAN demonstration. The latter and receiving-terminal screenshots remain pending until performed on the team's devices.
 
 ## Artifacts
 
-`artifacts/` holds all five fitted models, the tuned candidate, final model and configuration. `results/` holds grouped-fold records, predictions for all ten permitted student trips, optimization trials, comparison tables, plots and the consolidated PDF. `results/eda/representative_map.html` is the actual Folium map. `STATUS.md` records real progress and outstanding evidence.
+`artifacts/` holds all five original fitted models, tuned Extra Trees, and the active refined boosting model with its decoder configuration. `results/` holds grouped-fold records, predictions for all ten permitted student trips, optimization trials, comparison tables, plots and the consolidated PDF. Refinement evidence is under `results/context-boost-v1/`. `results/eda/representative_map.html` shows the original HMM example. `STATUS.md` records completed work and pending evidence.
 
 Optional screenshot verification uses `python -m pip install playwright`, `python -m playwright install chromium`, then `python -m scripts.capture_ui` against the running server. `python -m scripts.report` creates the consolidated PDF from completed result files. Never manufacture missing screenshots, losses or results.
 
 For screenshot capture and PDF rendering together, install `requirements-dev.txt`, install Chromium as above, and use `python -m scripts.report --render`. Rendered review pages are local QA files and are excluded from the submission ZIP.
 
 ## Research concepts
+
+The [current repository review](docs/current_repo_review.md) records the 18 November 2026 check of map-matching and boosting projects, ideas already implemented, and the requirements for a future ranking experiment.
 
 The custom implementation is informed by [Newson and Krumm (2009)](https://www.microsoft.com/en-us/research/publication/hidden-markov-map-matching-noise-sparseness/), [FMM](https://github.com/cyang-kth/fmm), [LeuvenMapMatching](https://github.com/wannesm/LeuvenMapMatching), and [heading feature-engineering research](https://arxiv.org/abs/1409.0797). No existing matcher or another team's implementation was copied. See [decoder details](docs/decoder.md), [model notes](docs/model_notes.md) and [viva preparation](docs/VIVA.md).

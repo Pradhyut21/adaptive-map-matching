@@ -1,0 +1,26 @@
+[I 2026-11-18 12:37:31,968] A new study created in RDB with name: context-boost-v1
+tpe_00 fold 0: 47.54% in 45.7s
+tpe_00 fold 1: 68.99% in 42.7s
+tpe_00 fold 2: 69.29% in 30.6s
+[I 2026-11-18 12:39:31,225] Trial 0 finished with value: 0.6193777869663512 and parameters: {'max_leaf_nodes': 31, 'max_iter': 160, 'min_samples_leaf': 24, 'learning_rate': 0.11724442691296792, 'l2_regularization': 0.237946523378493}. Best is trial 0 with value: 0.6193777869663512.
+tpe_01 fold 0: 47.68% in 57.6s
+tpe_01 fold 1: 69.24% in 51.6s
+tpe_01 fold 2: 69.79% in 48.5s
+[I 2026-11-18 12:42:09,042] Trial 1 finished with value: 0.6223713027124361 and parameters: {'max_leaf_nodes': 63, 'max_iter': 220, 'min_samples_leaf': 47, 'learning_rate': 0.08359798738456735, 'l2_regularization': 4.742008715801886}. Best is trial 1 with value: 0.6223713027124361.
+tpe_02 fold 0: 47.49% in 32.9s
+tpe_02 fold 1: 68.86% in 31.6s
+tpe_02 fold 2: 69.48% in 27.2s
+[I 2026-11-18 12:43:40,859] Trial 2 finished with value: 0.6194489956618358 and parameters: {'max_leaf_nodes': 63, 'max_iter': 120, 'min_samples_leaf': 92, 'learning_rate': 0.0715142215797045, 'l2_regularization': 0.5529243499432376}. Best is trial 1 with value: 0.6223713027124361.
+tpe_03 fold 0: 47.89% in 56.8s
+tpe_03 fold 1: 69.22% in 52.4s
+tpe_03 fold 2: 69.98% in 50.1s
+[I 2026-11-18 12:46:20,402] Trial 3 finished with value: 0.6236443230334605 and parameters: {'max_leaf_nodes': 63, 'max_iter': 220, 'min_samples_leaf': 37, 'learning_rate': 0.0951439938623876, 'l2_regularization': 6.14425460652914}. Best is trial 3 with value: 0.6236443230334605.
+tpe_04 fold 0: 47.78% in 50.6s
+tpe_04 fold 1: 69.44% in 49.9s
+tpe_04 fold 2: 70.24% in 51.2s
+[I 2026-11-18 12:48:52,194] Trial 4 finished with value: 0.6248916282635191 and parameters: {'max_leaf_nodes': 63, 'max_iter': 220, 'min_samples_leaf': 34, 'learning_rate': 0.167183967440156, 'l2_regularization': 6.386206239295492}. Best is trial 4 with value: 0.6248916282635191.
+tpe_05 fold 0: 48.34% in 1090.6s
+tpe_05 fold 1: 69.42% in 37.8s
+tpe_05 fold 2: 70.06% in 34.5s
+[I 2026-11-18 13:08:15,238] Trial 5 finished with value: 0.6260793159903465 and parameters: {'max_leaf_nodes': 63, 'max_iter': 220, 'min_samples_leaf': 99, 'learning_rate': 0.16140369494078055, 'l2_regularization': 0.3603398141798485}. Best is trial 5 with value: 0.6260793159903465.
+TPE best 62.61%, untuned 62.24%, selected tpe_05

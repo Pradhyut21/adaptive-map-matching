@@ -1,0 +1,17 @@
+00000008 {'original_geometry': 0.3521, 'allow_gps_dwell': 0.3728, 'dwell_smooth': 0.3307, 'stronger_transitions': 0.4083, 'favor_classifier': 0.376, 'stronger_transitions_realign': 0.3902, 'smoothed_realign': 0.2732}
+00000005 {'original_geometry': 0.9914, 'allow_gps_dwell': 0.9866, 'dwell_smooth': 0.9895, 'stronger_transitions': 0.9885, 'favor_classifier': 0.9866, 'stronger_transitions_realign': 0.9876, 'smoothed_realign': 0.9876}
+00000004 {'original_geometry': 0.7895, 'allow_gps_dwell': 0.7838, 'dwell_smooth': 0.765, 'stronger_transitions': 0.7961, 'favor_classifier': 0.7829, 'stronger_transitions_realign': 0.8064, 'smoothed_realign': 0.7697}
+00000048 {'original_geometry': 0.6395, 'allow_gps_dwell': 0.6766, 'dwell_smooth': 0.6234, 'stronger_transitions': 0.7024, 'favor_classifier': 0.6726, 'stronger_transitions_realign': 0.7266, 'smoothed_realign': 0.5589}
+00000010 {'original_geometry': 0.7392, 'allow_gps_dwell': 0.7484, 'dwell_smooth': 0.6411, 'stronger_transitions': 0.7492, 'favor_classifier': 0.7484, 'stronger_transitions_realign': 0.7672, 'smoothed_realign': 0.5437}
+00000074 {'original_geometry': 0.7574, 'allow_gps_dwell': 0.7418, 'dwell_smooth': 0.8792, 'stronger_transitions': 0.7403, 'favor_classifier': 0.7424, 'stronger_transitions_realign': 0.7475, 'smoothed_realign': 0.8626}
+00000022 {'original_geometry': 0.7932, 'allow_gps_dwell': 0.8101, 'dwell_smooth': 0.8186, 'stronger_transitions': 0.8312, 'favor_classifier': 0.8101, 'stronger_transitions_realign': 0.8882, 'smoothed_realign': 0.8312}
+00000064 {'original_geometry': 0.9537, 'allow_gps_dwell': 0.9513, 'dwell_smooth': 0.9508, 'stronger_transitions': 0.9479, 'favor_classifier': 0.9517, 'stronger_transitions_realign': 0.957, 'smoothed_realign': 0.9527}
+00000097 {'original_geometry': 0.946, 'allow_gps_dwell': 0.9523, 'dwell_smooth': 0.9523, 'stronger_transitions': 0.9552, 'favor_classifier': 0.9511, 'stronger_transitions_realign': 0.9546, 'smoothed_realign': 0.9477}
+00000046 {'original_geometry': 0.3926, 'allow_gps_dwell': 0.4276, 'dwell_smooth': 0.4882, 'stronger_transitions': 0.4789, 'favor_classifier': 0.429, 'stronger_transitions_realign': 0.5103, 'smoothed_realign': 0.4725}
+00000043 {'original_geometry': 0.73, 'allow_gps_dwell': 0.7308, 'dwell_smooth': 0.7274, 'stronger_transitions': 0.7317, 'favor_classifier': 0.7313, 'stronger_transitions_realign': 0.7541, 'smoothed_realign': 0.761}
+00000098 {'original_geometry': 0.9479, 'allow_gps_dwell': 0.9549, 'dwell_smooth': 0.9525, 'stronger_transitions': 0.9586, 'favor_classifier': 0.9529, 'stronger_transitions_realign': 0.9624, 'smoothed_realign': 0.9533}
+00000090 {'original_geometry': 0.8955, 'allow_gps_dwell': 0.8993, 'dwell_smooth': 0.8899, 'stronger_transitions': 0.8974, 'favor_classifier': 0.8899, 'stronger_transitions_realign': 0.931, 'smoothed_realign': 0.9067}
+00000047 {'original_geometry': 0.7296, 'allow_gps_dwell': 0.7508, 'dwell_smooth': 0.7524, 'stronger_transitions': 0.8011, 'favor_classifier': 0.7476, 'stronger_transitions_realign': 0.8082, 'smoothed_realign': 0.772}
+00000088 {'original_geometry': 0.6747, 'allow_gps_dwell': 0.7272, 'dwell_smooth': 0.7317, 'stronger_transitions': 0.7557, 'favor_classifier': 0.7146, 'stronger_transitions_realign': 0.7626, 'smoothed_realign': 0.75}
+00000096 {'original_geometry': 0.793, 'allow_gps_dwell': 0.7939, 'dwell_smooth': 0.801, 'stronger_transitions': 0.7857, 'favor_classifier': 0.7949, 'stronger_transitions_realign': 0.7933, 'smoothed_realign': 0.8019}
+Selected stronger_transitions_realign: 79.07% held-out training Top-1

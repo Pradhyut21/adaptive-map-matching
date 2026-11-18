@@ -1,0 +1,117 @@
+{
+  "original_recipe": "context_weighted_larger",
+  "original_accuracy": 0.6223605059437386,
+  "best_trial": 5,
+  "best_accuracy": 0.6260793159903465,
+  "use_tuned": true,
+  "trials": [
+    {
+      "number": 0,
+      "value": 0.6193777869663512,
+      "state": "COMPLETE",
+      "phase": "startup",
+      "parameters": {
+        "max_leaf_nodes": 31,
+        "max_iter": 160,
+        "min_samples_leaf": 24,
+        "learning_rate": 0.11724442691296792,
+        "l2_regularization": 0.237946523378493
+      },
+      "fold_accuracy": [
+        0.47537685468719953,
+        0.689852759846232,
+        0.6929037463656219
+      ]
+    },
+    {
+      "number": 1,
+      "value": 0.6223713027124361,
+      "state": "COMPLETE",
+      "phase": "startup",
+      "parameters": {
+        "max_leaf_nodes": 63,
+        "max_iter": 220,
+        "min_samples_leaf": 47,
+        "learning_rate": 0.08359798738456735,
+        "l2_regularization": 4.742008715801886
+      },
+      "fold_accuracy": [
+        0.47675261468364916,
+        0.6924494088634221,
+        0.6979118845902369
+      ]
+    },
+    {
+      "number": 2,
+      "value": 0.6194489956618358,
+      "state": "COMPLETE",
+      "phase": "startup",
+      "parameters": {
+        "max_leaf_nodes": 63,
+        "max_iter": 120,
+        "min_samples_leaf": 92,
+        "learning_rate": 0.0715142215797045,
+        "l2_regularization": 0.5529243499432376
+      },
+      "fold_accuracy": [
+        0.4749478542581991,
+        0.6885616885471821,
+        0.694837444180126
+      ]
+    },
+    {
+      "number": 3,
+      "value": 0.6236443230334605,
+      "state": "COMPLETE",
+      "phase": "guided_TPE",
+      "parameters": {
+        "max_leaf_nodes": 63,
+        "max_iter": 220,
+        "min_samples_leaf": 37,
+        "learning_rate": 0.0951439938623876,
+        "l2_regularization": 6.14425460652914
+      },
+      "fold_accuracy": [
+        0.4789124099468927,
+        0.6922027997388844,
+        0.6998177594146043
+      ]
+    },
+    {
+      "number": 4,
+      "value": 0.6248916282635191,
+      "state": "COMPLETE",
+      "phase": "guided_TPE",
+      "parameters": {
+        "max_leaf_nodes": 63,
+        "max_iter": 220,
+        "min_samples_leaf": 34,
+        "learning_rate": 0.167183967440156,
+        "l2_regularization": 6.386206239295492
+      },
+      "fold_accuracy": [
+        0.47784730543351234,
+        0.6944222818597229,
+        0.7024052974973221
+      ]
+    },
+    {
+      "number": 5,
+      "value": 0.6260793159903465,
+      "state": "COMPLETE",
+      "phase": "guided_TPE",
+      "parameters": {
+        "max_leaf_nodes": 63,
+        "max_iter": 220,
+        "min_samples_leaf": 99,
+        "learning_rate": 0.16140369494078055,
+        "l2_regularization": 0.3603398141798485
+      },
+      "fold_accuracy": [
+        0.4833947247740351,
+        0.6942046855733662,
+        0.7006385376236384
+      ]
+    }
+  ]
+}

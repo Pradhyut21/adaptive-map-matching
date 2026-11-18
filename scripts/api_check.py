@@ -22,14 +22,21 @@ def request(url,payload=None):
         return response.status,json.load(response)
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:8000');args=parser.parse_args()
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--url',default='http://127.0.0.1:8000')
+    parser.add_argument('--evaluation',type=Path,help='Compare with a specific frozen offline result')
+    parser.add_argument('--output',type=Path,help='Save request evidence here')
+    args=parser.parse_args()
+    started=datetime.now(timezone.utc).isoformat()
     url=args.url.rstrip('/')
     _,health=request(url+'/health')
     if not health['model_ready']:raise RuntimeError('Final model is not ready')
     _,inventory=request(url+'/trips')
     if len(inventory['trips'])!=10:raise AssertionError('Expected all10 runtime trips')
     records=[]
-    offline_path=ROOT/'results/hmm_comparison.json'
+    refined=health.get('feature_version')=='context-boost-v1'
+    results_dir=ROOT/'results/context-boost-v1' if refined else ROOT/'results'
+    offline_path=args.evaluation or results_dir/('student_test.json' if refined else 'hmm_comparison.json')
     offline=json.loads(offline_path.read_text()) if offline_path.exists() and inventory['partition']=='student_test' else None
     expected={r['trip_id']:r for r in offline['hmm']['trips']} if offline else {}
     for trip in inventory['trips']:
@@ -43,10 +50,13 @@ def main():
             delta=abs(result['metrics']['top1_accuracy']-saved['top1_accuracy'])
             record['offline_top1_delta']=delta
             record['offline_sequence_lcs_f1_delta']=abs(result['metrics']['sequence_lcs_f1']-saved['sequence_lcs_f1'])
-            if delta>1/max(trip['observations'],1):raise AssertionError('Live inference diverged from saved offline evaluation by more than one observation')
+            if delta>1e-12 or record['offline_sequence_lcs_f1_delta']>1e-12:
+                raise AssertionError('Live inference metrics differ from frozen offline evaluation')
         records.append(record)
         print(f"HTTP{status} {trip['id']} n={record['observations']} Top1={result['metrics'].get('top1_accuracy')} inference={result['timing']['inference_seconds']:.2f}s run={result['run_id']}",flush=True)
-    evidence={'started_utc':datetime.now(timezone.utc).isoformat(),'url':url,'partition':inventory['partition'],'health':health,'requests':records,'scope':'Genuine same-machine HTTP requests for all10student-testing trips. No claim of second-laptop LAN demonstration.','second_laptop_demonstrated':False,'all_passed':len(records)==10}
-    (ROOT/'results/api_integration.json').write_text(json.dumps(evidence,indent=2),encoding='utf-8')
+    evidence={'started_utc':started,'url':url,'partition':inventory['partition'],'health':health,'requests':records,'scope':'Same-machine HTTP requests for all ten discovered trips.','second_laptop_demonstrated':False,'all_passed':len(records)==10}
+    output=args.output or results_dir/'api_integration.json'
+    output.parent.mkdir(parents=True,exist_ok=True)
+    output.write_text(json.dumps(evidence,indent=2),encoding='utf-8')
 
 if __name__=='__main__':main()

@@ -24,6 +24,22 @@ from pathsnap.metrics import METRIC_DEFINITIONS
 
 RESULTS=ROOT/"results"
 FIGURES=RESULTS/"figures"
+REFINEMENT_RESULTS=RESULTS/"context-boost-v1"
+
+REFINEMENT_RECIPE_LABELS={
+    "context_standard":"Unweighted",
+    "context_weighted":"Confidence weighted",
+    "context_weighted_larger":"Confidence weighted, larger trees",
+}
+REFINEMENT_DECODER_LABELS={
+    "original_geometry":"Original transition geometry",
+    "allow_gps_dwell":"Same-arc GPS jitter tolerance",
+    "dwell_smooth":"GPS jitter tolerance and smoothing",
+    "stronger_transitions":"Stronger transitions",
+    "favor_classifier":"Higher classifier influence",
+    "stronger_transitions_realign":"Stronger transitions and route realignment",
+    "smoothed_realign":"Smoothed geometry and route realignment",
+}
 MODEL_LABELS={
     "GaussianNB":"Gaussian Naive Bayes",
     "LogisticRegression":"Logistic Regression",
@@ -232,6 +248,95 @@ def add_reliability_ablation(report, evidence):
     report.image(target,max_height=205)
     report.p(f"The final artifact was frozen before this experiment, which took {number(evidence['elapsed_seconds'],2)} seconds. The label alignment also uses heading, so the comparison measures agreement with that alignment. The two variants retain the same smoothed heading inputs and sequence decoding is outside the ablation.","SmallText")
 
+def percentage(value):
+    return "N/A" if value is None else f"{value:.2%}"
+
+
+def refinement_label(key, labels):
+    if key.startswith("tpe_"):
+        return f"TPE trial {int(key.removeprefix('tpe_'))}"
+    return labels.get(key, key.replace("_", " "))
+
+
+def load_refinement_evidence():
+    required_names=("selection", "decoder_selection", "student_test")
+    records={name: load_json(REFINEMENT_RESULTS/f"{name}.json", False) for name in required_names}
+    if any(record is None for record in records.values()):
+        return None
+    for name in ("boost_tuning", "api_integration"):
+        records[name]=load_json(REFINEMENT_RESULTS/f"{name}.json", False)
+    return records
+
+
+def add_accuracy_refinement(report, records, original, models):
+    selection=records["selection"]
+    decoder=records["decoder_selection"]
+    student=records["student_test"]
+    report.page()
+    report.heading("8. Accuracy Refinement")
+    report.p(f"The refined run reused the Histogram Gradient Boosting algorithm and increased the candidate limit to {selection['candidate_k']} arcs within the {selection['candidate_radius_m']:g} m search radius. Its {len(selection['feature_names'])} inputs use only GPS observations, candidate geometry and short observation windows. The original trip partition, three cross-validation folds and derived reference labels were held fixed.")
+    report.p("The confidence-weighted variants downweight training observations whose derived label is far from the GPS point or farther than the nearest candidate, with an extra reduction for flagged poor fits. Pointwise evaluation still counts every observation. A reference arc absent from the candidate list counts as a miss.")
+    report.subheading("Model and decoder selection on training trips")
+    recipe_rows=[["Supervised variant", "Mean fold Top-1", "Pooled Top-1", "Mean trip Top-1"]]
+    for recipe in selection["recipes"]:
+        recipe_rows.append([refinement_label(recipe["recipe"], REFINEMENT_RECIPE_LABELS), percentage(recipe["mean_fold_accuracy"]), percentage(recipe["pooled_accuracy"]), percentage(recipe["mean_trip_accuracy"])])
+    report.table(recipe_rows, [278, 150, 150, 147], padding=4)
+    selected_recipe=escape(refinement_label(selection["selected_recipe"], REFINEMENT_RECIPE_LABELS))
+    report.p(f"The selected variant was <b>{selected_recipe}</b> at {percentage(selection['validation_accuracy'])} mean fold exact Top-1. The selected model was refit on the 80 training trips.")
+    if (tuning:=records["boost_tuning"]) is not None:
+        complete=[trial for trial in tuning["trials"] if trial["state"]=="COMPLETE"]
+        startup=sum(trial["phase"]=="startup" for trial in complete)
+        guided=sum(trial["phase"]=="guided_TPE" for trial in complete)
+        decision="The tuned parameters were used for refitting." if tuning["use_tuned"] else "Refitting used the original selected parameters."
+        report.p(f"The search completed {startup} startup and {guided} TPE-guided trials. Best trial {tuning['best_trial']} reached {percentage(tuning['best_accuracy'])} mean fold Top-1. The original selected variant reached {percentage(tuning['original_accuracy'])}. {decision}", "SmallText")
+    decoder_rows=[["Decoder variant", "Training OOF Top-1", "Ordered-sequence LCS F1"]]
+    for key, score in decoder["scores"].items():
+        label=refinement_label(key, REFINEMENT_DECODER_LABELS)
+        if key==decoder["selected"]:
+            label += " (selected)"
+        decoder_rows.append([label, percentage(score["top1_accuracy"]), number(score.get("sequence_lcs_f1"))])
+    report.table(decoder_rows, [365, 180, 180], padding=3)
+    report.p(f"Decoder selection used a fixed subset of {len(decoder['trip_ids'])} training trips. Each received out-of-fold scores from a model fitted on other trips. Selection maximized pooled exact Top-1. The student-test partition was evaluated after the classifier and decoder were frozen. Reused training folds provide model-selection evidence; the student-test set is a reused benchmark across project versions. Neither is a new independent generalisation estimate.", "SmallText")
+
+    report.page()
+    report.subheading("Student-test accuracy with frozen reference labels")
+    baseline=original["hmm"]["aggregate"]
+    classifier=student["classifier"]
+    refined=student["hmm"]
+    if baseline["observations"]!=refined["observations"]:
+        raise ValueError("Original and refined evaluation observation totals differ")
+    score_rows=[["Student-test method", "Exact arc Top-1", "Directed continuity", "Ordered-sequence LCS F1", "Candidate miss rate"]]
+    for label, score in (("Original selected classifier + HMM",baseline),("Refined classifier only",classifier),("Refined classifier + decoder",refined)):
+        score_rows.append([label, percentage(score["top1_accuracy"]), percentage(score.get("route_continuity")), number(score.get("sequence_lcs_f1")), percentage(score["candidate_miss_rate"])])
+    report.table(score_rows, [230, 105, 120, 155, 115], padding=4)
+    delta=(refined["top1_accuracy"]-baseline["top1_accuracy"])*100
+    report.p(f"The refinement changed exact-arc Top-1 by <b>{delta:+.2f} percentage points</b> over {refined['observations']:,} student-test observations with the same frozen labels. These scores measure agreement with the derived labels.")
+    original_boost=next(model for model in models if model["name"]=="HistGradientBoosting")["student_test"]
+    confusion=np.asarray(original_boost["confusion_matrix"])
+    candidate_accuracy=np.trace(confusion)/confusion.sum()
+    report.p(f"The earlier Histogram Gradient Boosting run correctly classified {percentage(candidate_accuracy)} of binary candidate rows, including true negatives. It selected the exact directed arc for {percentage(original_boost['top1_accuracy'])} of GPS observations. Exact arc Top-1 is the comparable measure in the table above.", "SmallText")
+    original_trips={trip["trip_id"]: trip for trip in original["hmm"]["trips"]}
+    refined_trips={trip["trip_id"]: trip for trip in refined["trips"]}
+    if original_trips.keys()!=refined_trips.keys():
+        raise ValueError("Original and refined student-test trip IDs differ")
+    trip_rows=[["Trip", "Original HMM Top-1", "Refined Top-1", "Change (percentage points)", "Refined sequence LCS F1"]]
+    for trip_id, trip in sorted(refined_trips.items()):
+        previous=original_trips[trip_id]["top1_accuracy"]
+        current=trip["top1_accuracy"]
+        trip_rows.append([trip_id, percentage(previous), percentage(current), f"{(current-previous)*100:+.2f}", number(trip.get("sequence_lcs_f1"))])
+    report.table(trip_rows, [100, 145, 145, 170, 165], padding=3)
+    if (api:=records["api_integration"]) is not None and api.get("requests"):
+        requests=api["requests"]
+        passed=sum(request.get("http_status")==200 for request in requests)
+        report.p(f"The refined artifact produced {passed} HTTP 200 responses in {len(requests)} recorded local requests. The physical two-laptop demonstration is pending.", "SmallText")
+    screenshot=REFINEMENT_RESULTS/"screenshots/ui_desktop.png"
+    if screenshot.is_file():
+        report.page()
+        report.subheading("Refined model - actual working interface")
+        report.image(screenshot,max_height=402)
+        report.p("Actual same-machine browser inference using the refined Histogram Gradient Boosting model. Ten HTTP checks exactly reproduced the frozen Top-1 and sequence scores. This does not establish the pending physical two-laptop demonstration.", "SmallText")
+
+
 def build_report():
     _,models=model_records()
     eda=load_json(RESULTS/"eda"/"summary.json")
@@ -241,6 +346,7 @@ def build_report():
     api=load_json(RESULTS/"api_integration.json",False)
     ablation=load_json(RESULTS/"ablation.json",False)
     capture=load_json(RESULTS/"screenshots"/"capture_metadata.json",False)
+    refinement=load_refinement_evidence()
     make_comparison_plots(models,tuning,hmm)
     r=Report()
     r.p("PathSnap Trace-Lite","CoverTitle")
@@ -252,15 +358,18 @@ def build_report():
     best_model=tuning["selected_model"]
     selected_name=escape(MODEL_LABELS.get(best_model,best_model))
     version="tuned " if tuning["used_tuned_model"] else ""
-    r.p(f"The final {version}{selected_name} classifier was chosen by three-fold trip-grouped validation on 80 training trips. Route comparisons use {aggregate['observations']:,} observations across {aggregate['trips']} student-test trips.")
+    r.p(f"The original model comparison selected {version}{selected_name} by three-fold trip-grouped validation on 80 training trips. Route comparisons use {aggregate['observations']:,} observations across {aggregate['trips']} student-test trips.")
     summary_rows=[["Student-test method","Observation Top-1","Directed continuity","Ordered-sequence LCS F1"]]
     for key,label in (("baseline","Nearest road"),("classifier","Selected classifier"),("hmm","Selected classifier + HMM")):
         item=hmm[key]["aggregate"]
         summary_rows.append([label,f"{item['top1_accuracy']:.2%}",f"{item['route_continuity']:.2%}",number(item['sequence_lcs_f1'])])
+    if refinement is not None:
+        item=refinement["student_test"]["hmm"]
+        summary_rows.append(["Accuracy refinement + decoder",percentage(item["top1_accuracy"]),percentage(item.get("route_continuity")),number(item.get("sequence_lcs_f1"))])
     r.table(summary_rows,[220,160,155,190])
     if api and api.get("requests"):
         passed=sum(request.get("http_status")==200 for request in api["requests"])
-        r.p(f"The local HTTP check returned {passed} successful predictions from {len(api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
+        r.p(f"The original artifact's local HTTP check returned {passed} successful predictions from {len(api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
     r.p("Pointwise accuracy uses approximate labels derived from the supplied chronological route sequences. The sequence and continuity metrics are project diagnostics.")
     r.p("AI assisted implementation, debugging and evidence compilation. The team must verify the implementation, interpret results independently and disclose the assistance according to the event policy.")
     r.page();r.heading("2.2 Dataset Understanding and EDA")
@@ -406,6 +515,7 @@ def build_report():
             r.image(logs,max_height=408)
             r.p("The server log viewer displays the stored request record from the browser run. The report archive also contains the server's original text log.","SmallText")
         r.p("The receiving-terminal screenshot remains pending until the physical demonstration.","SmallText")
+    if refinement is not None:add_accuracy_refinement(r,refinement,hmm,models)
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
     r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
@@ -421,6 +531,9 @@ def build_report():
     source_files += [path for path in (RESULTS/"feature_inventory.json",RESULTS/"screenshots"/"capture_metadata.json",RESULTS/"screenshots"/"folium_map.png",screenshot,RESULTS/"screenshots"/"server_logs_browser.png",server) if path.is_file()]
     if (RESULTS/"api_integration.json").exists():source_files.append(RESULTS/"api_integration.json")
     if ablation is not None:source_files.append(RESULTS/"ablation.json")
+    if refinement is not None:
+        source_files.extend(REFINEMENT_RESULTS/f"{name}.json" for name,record in refinement.items() if record is not None)
+        source_files.extend(path for path in (REFINEMENT_RESULTS/"screenshots/ui_desktop.png", REFINEMENT_RESULTS/"screenshots/capture_metadata.json", REFINEMENT_RESULTS/"integrity_audit.json") if path.is_file())
     manifest={
         "report":target.relative_to(ROOT).as_posix(),
         "generated_ist":now.isoformat(),

@@ -1,0 +1,11 @@
+00000000: boost 91.29%, decoder 92.97%
+00000007: boost 84.56%, decoder 99.19%
+00000009: boost 80.36%, decoder 88.08%
+00000040: boost 80.83%, decoder 84.54%
+00000052: boost 95.42%, decoder 98.47%
+00000056: boost 80.24%, decoder 86.94%
+00000065: boost 65.49%, decoder 74.74%
+00000076: boost 74.56%, decoder 85.40%
+00000077: boost 44.21%, decoder 51.78%
+00000091: boost 75.86%, decoder 85.01%
+Frozen student-test Top-1: 80.56%
