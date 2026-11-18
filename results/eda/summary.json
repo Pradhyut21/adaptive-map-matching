@@ -1,0 +1,147 @@
+{
+  "scope": "All 80 train and 10 student_test trips; no evaluator files inspected.",
+  "partitions": {
+    "train": {
+      "trips": 80,
+      "observations": 208417,
+      "nodes_summed": 1933485,
+      "arcs_summed": 3876904,
+      "route_rows": {
+        "minimum": 59.0,
+        "median": 280.0,
+        "maximum": 2266.0
+      },
+      "max_gap_seconds": 153064.0,
+      "time_steps": 208337,
+      "one_second_fraction": 0.9650134157638826,
+      "gaps_over_60s": 69,
+      "track_rows": {
+        "minimum": 361.0,
+        "median": 1529.0,
+        "maximum": 19313.0
+      },
+      "nodes_rows": {
+        "minimum": 299.0,
+        "median": 9608.0,
+        "maximum": 155003.0
+      },
+      "arcs_rows": {
+        "minimum": 649.0,
+        "median": 19526.5,
+        "maximum": 307392.0
+      },
+      "weak_components": {
+        "minimum": 1.0,
+        "median": 20.0,
+        "maximum": 421.0
+      },
+      "strong_components": {
+        "minimum": 2.0,
+        "median": 127.0,
+        "maximum": 1942.0
+      },
+      "isolated_nodes": {
+        "minimum": 0.0,
+        "median": 0.0,
+        "maximum": 0.0
+      },
+      "largest_weak_component_fraction": {
+        "minimum": 0.6927966101694916,
+        "median": 0.9810660720777296,
+        "maximum": 1.0
+      },
+      "repeated_reference_arcs": {
+        "minimum": 0.0,
+        "median": 0.0,
+        "maximum": 29.0
+      },
+      "nonpositive_time_steps": 0,
+      "invalid_track_coordinates": 0,
+      "invalid_node_coordinates": 0,
+      "invalid_arc_rows": 0,
+      "invalid_route_rows": 0,
+      "nonadjacent_reference_steps": 13,
+      "reference_steps": 31256,
+      "track_nonfinite_values": 0,
+      "nodes_nonfinite_values": 0,
+      "arcs_nonfinite_values": 0,
+      "route_nonfinite_values": 0,
+      "trips_with_missing_files": 0,
+      "route_rows_summed": 31336
+    },
+    "student_test": {
+      "trips": 10,
+      "observations": 19160,
+      "nodes_summed": 90689,
+      "arcs_summed": 185041,
+      "route_rows": {
+        "minimum": 95.0,
+        "median": 250.0,
+        "maximum": 1323.0
+      },
+      "max_gap_seconds": 210.0,
+      "time_steps": 19150,
+      "one_second_fraction": 0.9862140992167102,
+      "gaps_over_60s": 1,
+      "track_rows": {
+        "minimum": 262.0,
+        "median": 1420.0,
+        "maximum": 3958.0
+      },
+      "nodes_rows": {
+        "minimum": 1770.0,
+        "median": 6596.5,
+        "maximum": 26635.0
+      },
+      "arcs_rows": {
+        "minimum": 3577.0,
+        "median": 13145.0,
+        "maximum": 56027.0
+      },
+      "weak_components": {
+        "minimum": 5.0,
+        "median": 11.0,
+        "maximum": 100.0
+      },
+      "strong_components": {
+        "minimum": 6.0,
+        "median": 53.5,
+        "maximum": 415.0
+      },
+      "isolated_nodes": {
+        "minimum": 0.0,
+        "median": 0.0,
+        "maximum": 0.0
+      },
+      "largest_weak_component_fraction": {
+        "minimum": 0.8740341840318426,
+        "median": 0.9706052316639073,
+        "maximum": 0.9906947890818859
+      },
+      "repeated_reference_arcs": {
+        "minimum": 0.0,
+        "median": 0.0,
+        "maximum": 255.0
+      },
+      "nonpositive_time_steps": 0,
+      "invalid_track_coordinates": 0,
+      "invalid_node_coordinates": 0,
+      "invalid_arc_rows": 0,
+      "invalid_route_rows": 0,
+      "nonadjacent_reference_steps": 1,
+      "reference_steps": 3467,
+      "track_nonfinite_values": 0,
+      "nodes_nonfinite_values": 0,
+      "arcs_nonfinite_values": 0,
+      "route_nonfinite_values": 0,
+      "trips_with_missing_files": 0,
+      "route_rows_summed": 3477
+    }
+  },
+  "metric_notes": {
+    "node_arc_totals": "Summed per-trip rows, not unique global map objects.",
+    "nonadjacent_reference_steps": "Successive listed reference arcs with unequal end/start nodes; this is a file-level diagnostic, not a claim that reference routes are physically incorrect.",
+    "connectivity": "Directed road graph: weak/strong connected-component counts include isolated nodes."
+  },
+  "execution_seconds": 14.221332099999927
+}

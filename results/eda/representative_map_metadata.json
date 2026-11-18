@@ -1,0 +1,9 @@
+{
+  "trip_id": "00000000",
+  "partition": "student_test",
+  "observations": 2503,
+  "road_arcs_displayed": 15906,
+  "reference_arcs": 179,
+  "prediction_layer_included": false,
+  "coordinate_system": "+proj=aeqd +lat_0=56.111048499999995 +lon_0=54.3832535 +datum=WGS84 +units=m +no_defs +type=crs"
+}

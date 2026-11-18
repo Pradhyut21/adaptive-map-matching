@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>PathSnap Trace · Route reconstruction</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="PathSnap Trace home"><span class="brand-mark" aria-hidden="true">⌁</span><span>PathSnap <strong>Trace</strong><small>Distributed map matching</small></span></a>
+    <span class="mode-pill"><span class="dot"></span> Local inference</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">FROM NOISY POINTS TO CONNECTED ROADS</p><h1>Follow the route.<br><span>Keep the evidence.</span></h1><p class="intro-copy">Run a trip through the trained candidate scorer and directed sequence decoder. Inspect the reconstructed route, measured results, and unsupported gaps.</p></div>
+      <div class="connection-block"><span id="connectionStatus" class="connection-status" role="status"><span class="dot"></span> Not connected</span><span id="modelStatus">Connect to the inference server</span></div>
+    </section>
+
+    <section class="controls-panel" aria-label="Inference controls">
+      <div class="field server-field"><label for="serverUrl">Inference server</label><div class="input-group"><input id="serverUrl" type="url" placeholder="http://192.168.1.10:8000" spellcheck="false" autocomplete="url"><button id="connectButton" class="secondary-button" type="button">Connect</button></div></div>
+      <div class="field trip-field"><label for="tripSelect">Trip <span id="partitionBadge" class="inline-tag">Waiting</span></label><select id="tripSelect" disabled><option value="">Connect to load trips</option></select></div>
+      <button id="runButton" class="primary-button" type="button" disabled><span id="runButtonText">Reconstruct route</span><span aria-hidden="true">↗</span></button>
+    </section>
+    <p id="message" class="message" role="status">The UI sends a trip ID to the API. Predictions are computed on the receiving laptop.</p>
+
+    <section class="metrics-grid" aria-label="Evaluation results">
+      <article class="metric-card"><p>Observation Top-1 <span title="Correct predicted road arcs / all GPS observations, including missing predictions.">ⓘ</span></p><strong id="metricAccuracy">—</strong><small>Against derived reference labels</small></article>
+      <article class="metric-card"><p>Route continuity <span title="Feasible directed transitions / eligible consecutive observation pairs. See the report for gap exclusions.">ⓘ</span></p><strong id="metricContinuity">—</strong><small>Directed network feasibility</small></article>
+      <article class="metric-card"><p>Sequence LCS F1 <span title="Ordered road-sequence similarity using longest common subsequence. This is a project diagnostic, not an official scoring formula.">ⓘ</span></p><strong id="metricSequence">—</strong><small>Ordered route agreement</small></article>
+      <article class="metric-card"><p>Inference time</p><strong id="metricTime">—</strong><small>Measured on the API server</small></article>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="map-panel">
+        <div class="panel-heading"><div><p class="eyebrow">GEOGRAPHICAL VIEW</p><h2 id="mapTitle">Route inspection</h2></div><button id="fitButton" class="quiet-button" type="button" disabled>Fit route <span aria-hidden="true">⌗</span></button></div>
+        <div class="layer-controls" aria-label="Map layers"><label><input id="layerRoads" type="checkbox" checked><span class="legend-swatch roads"></span>Road network</label><label><input id="layerGps" type="checkbox" checked><span class="legend-swatch gps"></span>GPS points</label><label><input id="layerRoute" type="checkbox" checked><span class="legend-swatch route"></span>Predicted route</label></div>
+        <div id="mapWrap" class="map-wrap"><canvas id="mapCanvas" aria-label="Interactive map of road network, GPS points and predicted route. Drag to pan and use zoom buttons or mouse wheel to zoom." tabindex="0"></canvas><div id="mapEmpty" class="map-empty"><span class="empty-icon" aria-hidden="true">⌁</span><h3>A route starts with observations</h3><p>Connect, choose a trip, and run reconstruction.<br>Only actual API output is displayed here.</p></div><div class="map-zoom"><button id="zoomIn" type="button" aria-label="Zoom in">+</button><button id="zoomOut" type="button" aria-label="Zoom out">−</button></div><span id="mapScale" class="map-scale" hidden></span><span class="map-attribution">Local road geometry · no external basemap required</span></div>
+        <div class="map-footer"><span><span class="small-dot"></span>Drag to pan · scroll to zoom · select a GPS point</span><span id="mapCounts">No trip loaded</span></div>
+      </article>
+
+      <aside class="evidence-panel">
+        <div class="panel-heading"><div><p class="eyebrow">RUN EVIDENCE</p><h2>Details & diagnostics</h2></div><span id="runState" class="inline-tag">Ready</span></div>
+        <dl class="details-list"><div><dt>Trip</dt><dd id="detailTrip">—</dd></div><div><dt>Model</dt><dd id="detailModel">—</dd></div><div><dt>GPS observations</dt><dd id="detailObservations">—</dd></div><div><dt>Prediction coverage</dt><dd id="detailCoverage">—</dd></div><div><dt>Candidate miss rate</dt><dd id="detailMiss">—</dd></div><div><dt>Run ID</dt><dd id="detailRun" class="monospace">—</dd></div></dl>
+        <div class="point-inspector"><h3>Observation inspector</h3><p id="pointHint">Select a GPS point on the map to inspect its prediction.</p><dl id="pointDetails" class="details-list" hidden></dl><p class="fineprint">Score margins indicate relative candidate ambiguity. They are not calibrated probabilities that a route is correct.</p></div>
+        <div class="warnings-heading"><h3>Gap & quality warnings</h3><span id="warningCount" class="count-badge">—</span></div><ul id="warningsList" class="warnings-list"><li class="muted">No inference run yet.</li></ul>
+      </aside>
+    </section>
+    <footer class="page-footer"><span>Classifier scores → directed HMM / Viterbi → reconstructed route</span><span>Reference routes and point labels stay on the server.</span></footer>
+  </main>
+</body>
+</html>

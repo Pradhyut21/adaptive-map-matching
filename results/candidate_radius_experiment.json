@@ -1,0 +1,19 @@
+{
+  "partition": "train",
+  "trip_id": "00000054",
+  "k": 10,
+  "trials": [
+    {
+      "radius_m": 100,
+      "candidate_miss_rate": 0.8465800238181536
+    },
+    {
+      "radius_m": 250,
+      "candidate_miss_rate": 0.5440376948169626,
+      "seconds": 18.5067417
+    }
+  ],
+  "selected_radius_m": 250,
+  "selection_uses": "training trip only",
+  "limitation": "K10 still omits many derived reference arcs on this noisy training trip"
+}
