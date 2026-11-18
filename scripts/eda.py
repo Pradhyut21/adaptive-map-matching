@@ -131,7 +131,6 @@ def representative_map(trip_dir, predictions=None, route_segments=None):
     gps=folium.FeatureGroup(name="Raw GPS observations",show=True)
     for i,(lon,lat,_) in enumerate(track):
         folium.CircleMarker([lat,lon],radius=2,color="#3182ce",fill=True,fill_opacity=.7,weight=0,tooltip=f"GPS {i}").add_to(gps)
-    gps.add_to(m)
     ref=folium.FeatureGroup(name="Supplied reference route (student-test only)",show=True)
     folium.PolyLine(ends[reference][:,:,::-1].tolist(),color="#e09124",weight=5,opacity=.7).add_to(ref)
     ref.add_to(m)
@@ -142,6 +141,8 @@ def representative_map(trip_dir, predictions=None, route_segments=None):
             if segment:
                 folium.PolyLine(ends[np.asarray(segment,dtype=np.int32)][:,:,::-1].tolist(),color="#087f8c",weight=3,opacity=.95).add_to(pred)
         pred.add_to(m)
+    gps.add_to(m)
+    m.get_root().header.add_child(folium.Element("<style>.leaflet-container{background:#f3f7f9!important}</style>"))
     folium.LayerControl(collapsed=False).add_to(m)
     legend='<div style="position:fixed;bottom:25px;left:20px;z-index:9999;background:white;border:1px solid #ccc;padding:12px;font:13px Arial"><b>PathSnap - actual student-test data</b><br><span style="color:#3182ce">Blue</span>: GPS observations<br><span style="color:#e09124">Orange</span>: supplied reference<br><span style="color:#087f8c">Teal</span>: prediction when supplied<br>Grey: road graph<br>Reference is excluded from inference and evaluator UI.</div>'
     m.get_root().html.add_child(folium.Element(legend))

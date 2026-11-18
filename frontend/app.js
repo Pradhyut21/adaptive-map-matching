@@ -4,7 +4,7 @@
 const $ = (id) => document.getElementById(id);
 const canvas = $("mapCanvas");
 const ctx = canvas.getContext("2d");
-const state = { connected: false, busy: false, data: null, gps: [], roads: [], routes: [],
+const state = { connected: false, modelReady: false, busy: false, data: null, gps: [], roads: [], routes: [],
   origin: [0, 0], center: [0, 0], scale: 1, selected: -1, width: 1, height: 1, drag: null };
 const numberFormat = new Intl.NumberFormat("en-IN");
 const pct = (v) => typeof v === "number" && Number.isFinite(v) ? `${(100 * v).toFixed(1)}%` : "—";
@@ -65,12 +65,13 @@ async function connect() {
     }
     const count = $("tripSelect").options.length;
     const partition = result.partition || health.partition || "available trips";
-    state.connected = true; $("tripSelect").disabled = count === 0; $("runButton").disabled = count === 0;
+    state.modelReady = health.model_ready !== false && health.model_loaded !== false;
+    state.connected = true; $("tripSelect").disabled = count === 0; $("runButton").disabled = count === 0 || !state.modelReady;
     connection("Server connected", "connected"); setText("partitionBadge", partition.replaceAll("_", " "));
-    setText("modelStatus", health.model_name || health.model || (health.model_loaded === false ? "Model not loaded — check server" : "Inference server is reachable"));
+    setText("modelStatus", health.model_name || health.model || (!state.modelReady ? "Trained model not ready — reconnect after training" : "Inference server is reachable"));
     try { localStorage.setItem("pathsnap-server", serverBase()); } catch (_) { /* Optional preference only. */ }
     if (!count) throw new Error("Server is reachable but no trips were discovered. Check PATHSNAP_DATA on Laptop 1.");
-    message(`Connected · ${count} trips discovered in ${partition.replaceAll("_", " ")}. Choose a trip to run genuine inference.`, "success");
+    message(state.modelReady ? `Connected · ${count} trips discovered in ${partition.replaceAll("_", " ")}. Choose a trip to run genuine inference.` : `Server connected · ${count} trips discovered. Complete model training on Laptop 1, then select Connect again.`, state.modelReady ? "success" : "");
   } catch (error) {
     state.connected = false; $("runButton").disabled = true; $("tripSelect").disabled = true;
     connection("Connection needs attention", "error"); setText("modelStatus", "Check the inference server"); message(error.message, "error");
@@ -78,7 +79,7 @@ async function connect() {
 }
 
 async function run() {
-  if (!state.connected || state.busy || !$("tripSelect").value) return;
+  if (!state.connected || !state.modelReady || state.busy || !$("tripSelect").value) return;
   const tripId = $("tripSelect").value;
   state.busy = true; document.body.classList.add("is-busy");
   $("runButton").disabled = true; $("connectButton").disabled = true; $("tripSelect").disabled = true;
@@ -89,10 +90,10 @@ async function run() {
     renderResult(result);
     setText("runState", "Complete"); message(`Trip ${result.trip_id || tripId} complete. Results below come from this API request.`, "success");
   } catch (error) {
-    setText("runState", "Failed"); message(error.message, "error");
+    setText("runState", "Failed"); message(`${error.message}${state.data ? " The previous successful result remains displayed." : ""}`, "error");
   } finally {
     state.busy = false; document.body.classList.remove("is-busy");
-    $("runButton").disabled = !state.connected; $("connectButton").disabled = false; $("tripSelect").disabled = false;
+    $("runButton").disabled = !state.connected || !state.modelReady; $("connectButton").disabled = false; $("tripSelect").disabled = false;
     setText("runButtonText", "Reconstruct route");
   }
 }

@@ -11,6 +11,7 @@ from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifie
 from .settings import SEED
 from .cache import cache_files,read_cache
 from .metrics import candidate_metrics, observation_metrics
+from .scoring import positive_scores
 
 MODEL_NAMES=['GaussianNB','LogisticRegression','DecisionTree','ExtraTrees','HistGradientBoosting']
 FAMILIES={'GaussianNB':'Probabilistic','LogisticRegression':'Linear','DecisionTree':'Decision tree','ExtraTrees':'Randomized tree ensemble','HistGradientBoosting':'Gradient boosting'}
@@ -65,13 +66,6 @@ def training_sample(data,rows,seed=SEED):
     rng=np.random.default_rng(seed)
     keep=(data.y[rows]==1)|(data.ranks[rows]<2)|(rng.random(len(rows))<0.12)
     return rows[keep]
-
-def positive_scores(model,X,batch_size=100000):
-    result=np.empty(len(X),np.float32)
-    index=int(np.flatnonzero(model.classes_==1)[0])
-    for lo in range(0,len(X),batch_size):
-        result[lo:lo+batch_size]=model.predict_proba(X[lo:lo+batch_size])[:,index]
-    return result
 
 def score_rows(data,rows,scores,observation_groups=None):
     obs=data.row_obs[rows]

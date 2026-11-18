@@ -2,13 +2,16 @@ import argparse
 import json
 import csv
 import platform
+import subprocess
+from datetime import datetime,timezone
+import importlib.metadata
 import time
 from pathlib import Path
 import joblib
 import numpy as np
 from sklearn.model_selection import GroupKFold
 from threadpoolctl import threadpool_limits
-from pathsnap.settings import ROOT,SEED,FEATURE_VERSION
+from pathsnap.settings import ROOT,SEED,FEATURE_VERSION,CANDIDATE_K,CANDIDATE_RADIUS
 from pathsnap.cache import read_cache
 from pathsnap.features import FEATURE_NAMES
 from pathsnap.learning import *
@@ -60,7 +63,7 @@ def fit_evaluate(name,train,test,params=None,tag=None):
     with threadpool_limits(limits=4):scores=positive_scores(model,test.X)
     inference=time.perf_counter()-start
     metrics,predictions=score_rows(test,np.arange(len(test.y)),scores)
-    artifact={'model':model,'model_name':name,'params':DEFAULTS[name]|(params or {}),'feature_names':FEATURE_NAMES,'feature_version':FEATURE_VERSION,'seed':SEED,'negative_sampling':'all positives, rank<2, seeded12percent other negatives','training_trip_ids':train.trip_ids}
+    artifact={'model':model,'model_name':name,'params':DEFAULTS[name]|(params or {}),'feature_names':FEATURE_NAMES,'feature_version':FEATURE_VERSION,'candidate_k':CANDIDATE_K,'candidate_radius_m':CANDIDATE_RADIUS,'seed':SEED,'negative_sampling':'all positives, rank<2, seeded12percent other negatives','training_trip_ids':train.trip_ids}
     joblib.dump(artifact,ROOT/'artifacts'/f'{tag}.joblib',compress=3)
     target=RESULTS/'predictions'/tag;target.mkdir(parents=True,exist_ok=True)
     per_trip=[]
@@ -89,6 +92,8 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--smoke',action='store_true');args=parser.parse_args()
     start=time.perf_counter()
     train=load_partition('train');test=load_partition('student_test')
+    if not args.smoke and (len(train.trip_ids)!=80 or len(test.trip_ids)!=10):
+        raise ValueError('Full run requires cached80train/10student trips; finish scripts.prepare first')
     dump(RESULTS/'metric_definitions.json',METRIC_DEFINITIONS)
     if args.smoke:
         rows=np.flatnonzero(train.groups==0)
@@ -99,6 +104,7 @@ def main():
         metrics,_=score_rows(test,np.arange(len(test.y)),p)
         dump(RESULTS/'smoke_training.json',{'seconds':time.perf_counter()-start,'training_trips':[train.trip_ids[0]],'student_metrics':metrics,'purpose':'runtime and API smoke only, excluded from official model comparison'})
         print('Smoke:',metrics,'seconds',time.perf_counter()-start,flush=True);return
+    dump(RESULTS/'execution_manifest.json',{'started_utc':datetime.now(timezone.utc).isoformat(),'python':platform.python_version(),'platform':platform.platform(),'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'seed':SEED,'feature_version':FEATURE_VERSION,'candidate_k':CANDIDATE_K,'radius_m':CANDIDATE_RADIUS,'training_trips':train.trip_ids,'student_test_trips':test.trip_ids,'versions':{m:importlib.metadata.version(m) for m in ['numpy','scipy','scikit-learn','shapely','pyproj','optuna','joblib']}})
     records=[]
     for name in MODEL_NAMES:
         cv,_=cross_validate(name,train,record=True)

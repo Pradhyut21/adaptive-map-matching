@@ -92,6 +92,20 @@ class ReferenceAlignmentTests(unittest.TestCase):
         np.testing.assert_allclose(heading[2:], [np.pi / 2, np.pi / 2])
         self.assertTrue(np.all((reliability >= 0) & (reliability <= 1)))
 
+    def test_failed_monotone_alignment_uses_logged_exact_nearest_fallback(self):
+        raw_nodes = np.array([[0, 0], [100, 0], [400, 0], [500, 0]], float)
+        net = RoadNetwork(raw_nodes / 111319.49, [[0, 1], [2, 3]])
+        xy = net.project(np.array([[450, 0], [50, 0]], float) / 111319.49)
+        labels, positions, info = align_reference(net, xy, np.array([0, 1]), np.array([0, 1]))
+        self.assertEqual(labels.tolist(), [1, 0])
+        self.assertEqual(positions.tolist(), [1, 0])
+        self.assertEqual(info["nearest_fallback_count"], 1)
+        self.assertEqual(info["nearest_fallback_fraction"], 0.5)
+        self.assertEqual(info["nearest_fallbacks"][0]["point_index"], 1)
+        self.assertEqual(info["nearest_fallbacks"][0]["arc_id"], 0)
+        self.assertLess(info["nearest_fallbacks"][0]["distance_m"], 0.01)
+        self.assertEqual(info["poor_fit_count"], 0)
+
 
 class MetricTests(unittest.TestCase):
     def test_missing_candidate_remains_top1_failure(self):
