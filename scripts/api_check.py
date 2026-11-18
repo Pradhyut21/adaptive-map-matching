@@ -36,7 +36,8 @@ def main():
     records=[]
     version=health.get('feature_version')
     refined=version in ('context-boost-v1', 'route-context-v1')
-    results_dir=ROOT/'results'/version if refined else ROOT/'results'
+    deployment=health.get('deployment_version') or version
+    results_dir=ROOT/'results'/deployment if refined else ROOT/'results'
     offline_path=args.evaluation or results_dir/('student_test.json' if refined else 'hmm_comparison.json')
     offline=json.loads(offline_path.read_text()) if offline_path.exists() and inventory['partition']=='student_test' else None
     expected={r['trip_id']:r for r in offline['hmm']['trips']} if offline else {}

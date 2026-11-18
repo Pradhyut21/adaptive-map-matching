@@ -1,0 +1,10 @@
+{
+  "selected": "smooth_3",
+  "feature_version": "route-context-v1",
+  "source_model_sha256": "7fe8eac3b262ed7a9bf32bbc62e296643887e90bc5c22ea7c9b3da4e6315d636",
+  "model_sha256": "ad75c92ffb07195ee737f7043e4b902526147482cdbf8f0cd329739ce0264c3f",
+  "config_sha256": "427dfde810dbedacea003664b981cf94abb64c87fb40e17b7da04b4e891a3654",
+  "training_validation_sha256": "74b5c981c4de5318da534c6d8b316993c4ac4051d22645ec20e5d9989477dc41",
+  "selection_source": "training out-of-fold predictions",
+  "student_test_opened": false
+}

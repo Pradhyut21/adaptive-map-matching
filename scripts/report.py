@@ -26,6 +26,7 @@ RESULTS=ROOT/"results"
 FIGURES=RESULTS/"figures"
 REFINEMENT_RESULTS=RESULTS/"context-boost-v1"
 ROUTE_RESULTS=RESULTS/"route-context-v1"
+NOISE_RESULTS=RESULTS/"gps-noise-v1"
 
 REFINEMENT_RECIPE_LABELS={
     "context_standard":"Unweighted",
@@ -403,6 +404,23 @@ def add_decoder_comparison(report,evidence):
     report.p(f"Compared with the same blend scored independently per fix, decoding changed Top-1 by {(decoded['top1_accuracy']-raw['top1_accuracy'])*100:+.2f} percentage points and ordered LCS F1 by {decoded['sequence_lcs_f1']-raw['sequence_lcs_f1']:+.4f}. Point accuracy improved on {len(better)} trips and decreased on {len(worse)}. The decoder was selected on out-of-fold training routes. This experiment uses all 19,160 student-test observations.", "SmallText")
 
 
+def add_noise_results(report, validation, student):
+    report.page()
+    report.heading("10. GPS noise tolerance in the deployed decoder")
+    report.p("The reference-free decoder models a bounded backward shift of a same-arc GPS projection as measurement jitter. This keeps a slow vehicle on one directed road while position estimates fluctuate. Genuine movement beyond the configured tolerance still requires a supported directed path.")
+    report.p(f"Selection used {len(validation['trip_ids'])} training trips with out-of-fold classifier scores. Half were the slowest training trips by GPS motion and the rest were sampled by a fixed hash. The chosen configuration was {escape(validation['selected'].replace('_',' '))}. The objective maximized pooled exact road-arc Top-1 over every training observation in the selection set.")
+    rows=[["Training-only setting","Top-1","Ordered LCS F1","Strict continuity"]]
+    for name,row in validation["scores"].items():
+        rows.append([name.replace("_"," "),percentage(row["top1_accuracy"]),number(row["sequence_lcs_f1"]),
+                     percentage(row["route_continuity"])])
+    report.table(rows,[335,130,130,130],padding=3)
+    current=student["hmm"]
+    previous=load_json(ROUTE_RESULTS/"student_test.json")["hmm"]
+    report.p(f"After settings were frozen, all ten permitted student trips were scored. Top-1 changed from {percentage(previous['top1_accuracy'])} to {percentage(current['top1_accuracy'])}, ordered LCS F1 from {number(previous['sequence_lcs_f1'])} to {number(current['sequence_lcs_f1'])}, and strict continuity from {percentage(previous['route_continuity'])} to {percentage(current['route_continuity'])}. Both runs use full-route labels over {current['observations']:,} observations.")
+    report.p(f"Frozen settings: {escape(json.dumps(validation['settings'],sort_keys=True))}.", "SmallText")
+    report.p("The student partition is a reused benchmark. Evaluator routes are reserved for final assessment. The noise-handling settings were selected from training scores, and the previously recorded model remains reproducible by loading its original artifact.", "SmallText")
+
+
 def build_report():
     _,models=model_records()
     eda=load_json(RESULTS/"eda"/"summary.json")
@@ -415,8 +433,12 @@ def build_report():
     refinement=load_refinement_evidence()
     route_records={name:load_json(ROUTE_RESULTS/f"{name}.json",False) for name in
                    ("student_test","decoder_selection","grouped_comparison","api_integration")}
-    active_api=route_records["api_integration"] or api
-    live_path=ROUTE_RESULTS if route_records["api_integration"] is not None else RESULTS
+    noise={name:load_json(NOISE_RESULTS/f"{name}.json",False)
+           for name in ("training_validation","student_test","api_integration")}
+    has_noise=noise["training_validation"] is not None and noise["student_test"] is not None
+    active_api=noise["api_integration"] or route_records["api_integration"] or api
+    live_path=(NOISE_RESULTS if noise["api_integration"] is not None
+               else ROUTE_RESULTS if route_records["api_integration"] is not None else RESULTS)
     tuning_comparison=load_json(REFINEMENT_RESULTS/"boost_tuning_comparison.json",False)
     active_decoder_comparison=load_json(ROUTE_RESULTS/"classifier_decoder_comparison.json",False)
     has_route_results=all(route_records[name] is not None for name in
@@ -444,6 +466,9 @@ def build_report():
     if has_route_results:
         row=route_records["student_test"]["hmm"]
         r.p(f"Section 9 compares the full-route alignment results under both reference-label methods. The selected run reached {percentage(row['top1_accuracy'])} on full-route labels, {percentage(row['legacy_top1_accuracy'])} on earlier labels, and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])}.")
+    if has_noise:
+        row=noise["student_test"]["hmm"]
+        r.p(f"The current GPS-noise decoder is documented in section 10. It reached {percentage(row['top1_accuracy'])} full-route Top-1 and ordered sequence LCS F1 of {number(row['sequence_lcs_f1'])} on the student benchmark.")
     if active_api and active_api.get("requests"):
         passed=sum(request.get("http_status")==200 for request in active_api["requests"])
         r.p(f"The recorded live HTTP check returned {passed} successful predictions from {len(active_api['requests'])} requests. The physical two-laptop demonstration and receiving-terminal screenshot are pending.")
@@ -558,7 +583,7 @@ def build_report():
     if active_decoder_comparison is not None:
         add_decoder_comparison(r,active_decoder_comparison)
     r.page();r.heading("6. Geographical Visualisation Using Folium")
-    map_path=ROUTE_RESULTS/"map"
+    map_path=NOISE_RESULTS/"map" if (NOISE_RESULTS/"map/folium_map.png").is_file() else ROUTE_RESULTS/"map"
     active_map=(map_path/"representative_map_metadata.json").is_file()
     if not active_map: map_path=RESULTS/"eda"
     meta=load_json(map_path/"representative_map_metadata.json",False) or {}
@@ -605,6 +630,8 @@ def build_report():
     if has_route_results:
         add_route_alignment_comparison(r,route_records["student_test"],route_records["decoder_selection"],
                                        route_records["grouped_comparison"],route_records["api_integration"])
+    if has_noise:
+        add_noise_results(r,noise["training_validation"],noise["student_test"])
     r.page();r.heading("Metric definitions, limitations and review")
     for name,definition in METRIC_DEFINITIONS.items():r.p(f"<b>{escape(name)}:</b> {escape(definition)}","SmallText")
     r.p("The ten student-testing trips are permitted development data and should not be described as an untouched final generalisation estimate. Pointwise alignment ambiguity, candidate omissions, graph discontinuities, routing bounds and training-negative sampling limit interpretation. No claim is made about accuracy on reserved evaluator trips before their official evaluation.")
@@ -627,6 +654,8 @@ def build_report():
         source_files.extend(ROUTE_RESULTS/f"{name}.json" for name,record in route_records.items() if record is not None)
         source_files.extend(path for path in (ROUTE_RESULTS/"screenshots/ui_desktop.png",
                                               ROUTE_RESULTS/"screenshots/capture_metadata.json") if path.is_file())
+    if has_noise:
+        source_files.extend(NOISE_RESULTS/f"{name}.json" for name,record in noise.items() if record is not None)
     source_files.extend(path for path in (REFINEMENT_RESULTS/"boost_tuning_comparison.json",
                                           ROUTE_RESULTS/"classifier_decoder_comparison.json",
                                           map_path/"representative_map_metadata.json",folium_shot,

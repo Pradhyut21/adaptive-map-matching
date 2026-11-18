@@ -59,7 +59,7 @@ class PredictionRequest(BaseModel):
 
 @app.get('/health')
 def health():
-    return {'status':'ok','model_ready':MODEL is not None,'model_name':MODEL['model_name'] if MODEL else None,'feature_version':MODEL.get('feature_version') if MODEL else None,'model_error':MODEL_ERROR,'partition':partition_name(),'trip_count':len(trip_dirs(partition_name()))}
+    return {'status':'ok','model_ready':MODEL is not None,'model_name':MODEL['model_name'] if MODEL else None,'feature_version':MODEL.get('feature_version') if MODEL else None,'deployment_version':MODEL.get('deployment_version') if MODEL else None,'model_error':MODEL_ERROR,'partition':partition_name(),'trip_count':len(trip_dirs(partition_name()))}
 
 @app.get('/trips')
 def trips():

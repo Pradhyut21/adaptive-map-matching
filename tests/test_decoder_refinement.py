@@ -33,6 +33,21 @@ def candidates(network, arcs, fractions):
 
 
 class DecoderRefinementTests(unittest.TestCase):
+    def test_slow_gps_jitter_keeps_one_way_route_without_inventing_loops(self):
+        network = graph([[0, 0], [1000, 0]], [[0, 1]])
+        fraction = [.50, .52, .505, .515, .50, .52]
+        candidate = candidates(network, [0] * len(fraction), fraction)
+        timestamps = np.arange(len(fraction), dtype=float)
+        options = RefinementConfig(same_arc_jitter_m=30.)
+        result = decode_refined(network, candidate, np.ones(candidate.arc_ids.shape),
+                                candidate.xy[:, 0], timestamps, refinement=options)
+        self.assertEqual(result.route_segments, [[0]])
+        self.assertEqual(result.break_indices, [0])
+        self.assertEqual(result.warnings, [])
+        router = JitterAwareRouter(network, DecoderConfig(), same_arc_jitter_m=30.)
+        self.assertTrue(np.isinf(router.distance_matrix([0], [.5], [0], [.469], 200.)[0, 0]))
+        self.assertIsNone(router.arc_path(0, .5, 0, .469, 200.))
+
     def test_small_same_arc_reverse_jitter_dwells_and_real_reverse_is_unreachable(self):
         network = graph([[0, 0], [100, 0]], [[0, 1]])
         router = JitterAwareRouter(network, DecoderConfig(), same_arc_jitter_m=5.)

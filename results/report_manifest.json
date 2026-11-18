@@ -1,6 +1,6 @@
 {
   "report": "results/PathSnap_Technical_Report.pdf",
-  "generated_ist": "2026-11-18T16:12:57.258589+05:30",
+  "generated_ist": "2026-11-18T16:52:39.666216+05:30",
   "hashing": "SHA-256 with LF-normalized JSON and CSV, and original image bytes.",
   "sources": {
     "results/model_comparison.json": "2d0beab54214d17e64df94af8808ddbb2fe91af230884388049239c5a4394cfe",
@@ -14,7 +14,7 @@
     "results/feature_inventory.json": "2ebcf93c85812a71cec9d1029c861e17ce33fdc4705ee4f608c66731bd4b880e",
     "results/screenshots/capture_metadata.json": "0612d198e698fe5fc946d2f4fe8be338c7fa1141df61922c70a7eb40312e4124",
     "results/screenshots/folium_map.png": "3b90fd9d4b8a7bf4fc382bf2f466556655b701d3f0e8594d824ab19e2eaf5867",
-    "results/route-context-v1/screenshots/ui_desktop.png": "12c01b43737f847b09349c65f16f7fcdf29ca5bb909b2f3e427b47c587598d70",
+    "results/gps-noise-v1/screenshots/ui_desktop.png": "3a905eb3a3b30b2be702222fb9ffbbe5f93c35dc88ce3f2d7fefc44b06624a9b",
     "results/screenshots/server_logs_browser.png": "cd345620dff6a34f6635307025b76f2af31c7c50881fe0e581a3de4ff3b3cb27",
     "results/api_integration.json": "16c6774d1b813f723c569871255611072a56ffc0ddbd644e72de4114a93103cf",
     "results/ablation.json": "f75866759706eccb3f07e30ab26ceadde0b8161e21953abe7b6c71587613f672",
@@ -30,12 +30,17 @@
     "results/route-context-v1/decoder_selection.json": "9f885a88d876422c4c45205994c19b71a1ce2a51951e83c0889b9a1f9f50760b",
     "results/route-context-v1/grouped_comparison.json": "5ae10cd5c99145e03562910c683239d608311bead3c6cf325c7f27f10b59a1cb",
     "results/route-context-v1/api_integration.json": "62436aa699cd7a66175da4ba2999c268b61600f8f28f58654bf042081f5fcfaa",
+    "results/route-context-v1/screenshots/ui_desktop.png": "12c01b43737f847b09349c65f16f7fcdf29ca5bb909b2f3e427b47c587598d70",
     "results/route-context-v1/screenshots/capture_metadata.json": "08c245a0d1a882ce0155588a86e525b71a167a2837cad48d4fbb29fe7cc27052",
+    "results/gps-noise-v1/training_validation.json": "109dfe228a8576ad50b2a8117d614a337fc13461f49be1c22ad30c83c5d42ee3",
+    "results/gps-noise-v1/student_test.json": "112a1d416146b6240c215ba0fb4ad52c71499a59d37b69a30a1840c293a0df94",
+    "results/gps-noise-v1/api_integration.json": "c8626d86ca93b2db88080c612df9d3b2d17d647426d5553ef7ac3142b76d2d82",
     "results/context-boost-v1/boost_tuning_comparison.json": "f5cff047b4b07b00d692f917dc39293725373b72fd480be64b145194f6b07bcb",
     "results/route-context-v1/classifier_decoder_comparison.json": "0b4063e29cc0372ffff58e6a03691c1393e0e39e8a9f717a6ad949576e507eec",
-    "results/route-context-v1/map/representative_map_metadata.json": "8e272ef7bacb84fd51d92e598f915d19609457d2ad842d397d96841a6f50f265",
-    "results/route-context-v1/map/folium_map.png": "7951d647b8fccaff2b8af002391e813c5296fc74eeb3a80fc01e965db5592126",
-    "results/route-context-v1/screenshots/server_logs_browser.png": "5b01d3ea43aa77b969a3cc60588e85ff48d102de065b121cf101644a27298e5b"
+    "results/gps-noise-v1/map/representative_map_metadata.json": "5ab735177ac4ec9bcc34f340497de6f6b7eae6e2e3526a0e5bac4746148a409e",
+    "results/gps-noise-v1/map/folium_map.png": "7951d647b8fccaff2b8af002391e813c5296fc74eeb3a80fc01e965db5592126",
+    "results/gps-noise-v1/screenshots/server_logs_browser.png": "ae595228099be30ae77887fb8c23bf608d5954d48b57ee183c1d9821870c2402",
+    "results/gps-noise-v1/screenshots/capture_metadata.json": "804d674757b3a79f5d6d515ba88282063b4a4985793c47d3454601625c6322a8"
   },
   "team_review_required": true,
   "second_laptop_demo": "pending_without_team_evidence"

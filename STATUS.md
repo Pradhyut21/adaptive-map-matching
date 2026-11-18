@@ -1,6 +1,6 @@
 # PathSnap execution status
 
-The full-route boost blend is active. On the same student-test points and full-route reference labels, it improved from 78.41% to 86.41% exact Top-1. It reached 74.97% with the earlier labels versus 80.56% for the previous model. Ordered arc LCS F1 rose from 0.8790 to 0.8867 and strict continuity fell from 98.80% to 98.27%. See [paired results](results/route-context-v1/student_test.json) and [peer review](docs/peer_approach.md). The physical two-laptop demonstration and receiving-terminal screenshot are pending.
+The GPS-noise decoder is active with the same fitted boosting models. Training-only validation selected short-window smoothing and a 15 m same-arc jitter tolerance. On the ten student-test trips, full-route Top-1 increased from 86.41% to 94.03% and ordered arc LCS F1 from 0.8867 to 0.9795. Strict continuity decreased from 98.27% to 96.23%. Earlier-label Top-1 changed from 74.97% to 72.83%. The [new frozen run](results/gps-noise-v1/student_test.json) and [training selection](results/gps-noise-v1/training_validation.json) retain the actual denominators. The receiving-terminal screenshot remains pending team capture.
 
 ## Data and features
 
@@ -29,6 +29,8 @@ The full-route boost blend is active. On the same student-test points and full-r
 The original HMM improved Top-1 over the Extra Trees classifier on eight trips and reduced it on `00000000` and `00000007`. The refined model and decoder improved over the original HMM on all ten trips. Exact matches increased from 14,587 to 15,436 of 19,160 observations (+4.43 percentage points). Candidate misses decreased from 890 to 300. Feasible transitions decreased from 19,124 to 18,920 of 19,149 eligible pairs, with one time gap excluded in both runs. The ordered-sequence LCS F1 improved to 0.8790. These metrics describe agreement with the frozen approximate labels on the student-test trips. See `results/hmm_comparison.json`, `results/predictions/HMM/` and `results/context-boost-v1/student_test.json`.
 
 ## Local verification and deliverables
+
+- The GPS-noise decoder passed all 52 tests. The new same-arc regression keeps bounded noise on a one-way road without inventing loops and still rejects shifts beyond the configured tolerance.
 
 - The [deliverables checklist](docs/deliverables.md) maps the official repository and report requirements to the submitted files. The consolidated report includes the matched boosting tuning table, the active model's classifier-only versus Viterbi comparison, and the live Folium map export.
 

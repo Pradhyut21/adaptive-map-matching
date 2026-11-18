@@ -1,0 +1,43 @@
+INFO:     Started server process [25420]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53689 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53690 - "GET /trips HTTP/1.1" 200 OK
+2026-11-18 16:49:34,225 INFO pathsnap.api run=659c7f0adc56 POST /predict trip=00000000 partition=student_test BEGIN
+2026-11-18 16:49:41,298 INFO pathsnap.api run=659c7f0adc56 POST /predict trip=00000000 status=200 points=2503 inference=4.387s accuracy=0.9600479424690371 warnings=1
+INFO:     127.0.0.1:53691 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:49:42,873 INFO pathsnap.api run=ebd7f2902bee POST /predict trip=00000007 partition=student_test BEGIN
+INFO:     127.0.0.1:64380 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64380 - "GET /trips HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64380 - "OPTIONS /predict HTTP/1.1" 200 OK
+2026-11-18 16:49:46,161 INFO pathsnap.api run=ebd7f2902bee POST /predict trip=00000007 status=200 points=1354 inference=2.443s accuracy=0.8567208271787297 warnings=0
+2026-11-18 16:49:46,166 INFO pathsnap.api run=91ed5f78dd77 POST /predict trip=00000000 partition=student_test BEGIN
+INFO:     127.0.0.1:55994 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:49:52,242 INFO pathsnap.api run=91ed5f78dd77 POST /predict trip=00000000 status=200 points=2503 inference=4.210s accuracy=0.9600479424690371 warnings=1
+2026-11-18 16:49:52,252 INFO pathsnap.api run=40500ea30cd5 POST /predict trip=00000009 partition=student_test BEGIN
+INFO:     127.0.0.1:64380 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:49:57,281 INFO pathsnap.api run=40500ea30cd5 POST /predict trip=00000009 status=200 points=1049 inference=3.962s accuracy=0.8960915157292659 warnings=1
+INFO:     127.0.0.1:59534 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:49:57,909 INFO pathsnap.api run=876e6a2c9647 POST /predict trip=00000040 partition=student_test BEGIN
+INFO:     127.0.0.1:59202 - "GET /diagnostics/logs HTTP/1.1" 200 OK
+2026-11-18 16:50:05,677 INFO pathsnap.api run=876e6a2c9647 POST /predict trip=00000040 status=200 points=2995 inference=4.826s accuracy=0.9779632721202003 warnings=1
+INFO:     127.0.0.1:59203 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:07,532 INFO pathsnap.api run=683e066768a3 POST /predict trip=00000052 partition=student_test BEGIN
+2026-11-18 16:50:08,483 INFO pathsnap.api run=683e066768a3 POST /predict trip=00000052 status=200 points=262 inference=0.686s accuracy=0.9885496183206107 warnings=0
+INFO:     127.0.0.1:54365 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:08,659 INFO pathsnap.api run=f71cc26bf9eb POST /predict trip=00000056 partition=student_test BEGIN
+2026-11-18 16:50:23,169 INFO pathsnap.api run=f71cc26bf9eb POST /predict trip=00000056 status=200 points=3958 inference=9.494s accuracy=0.9550277918140475 warnings=3
+INFO:     127.0.0.1:54366 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:24,637 INFO pathsnap.api run=d572161747bb POST /predict trip=00000065 partition=student_test BEGIN
+2026-11-18 16:50:27,305 INFO pathsnap.api run=d572161747bb POST /predict trip=00000065 status=200 points=768 inference=2.025s accuracy=0.9557291666666666 warnings=1
+INFO:     127.0.0.1:51679 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:27,970 INFO pathsnap.api run=292ffb93197a POST /predict trip=00000076 partition=student_test BEGIN
+2026-11-18 16:50:45,635 INFO pathsnap.api run=292ffb93197a POST /predict trip=00000076 status=200 points=1486 inference=14.464s accuracy=0.9596231493943472 warnings=1
+INFO:     127.0.0.1:55239 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:46,991 INFO pathsnap.api run=3ad0f39c159d POST /predict trip=00000077 partition=student_test BEGIN
+2026-11-18 16:50:57,658 INFO pathsnap.api run=3ad0f39c159d POST /predict trip=00000077 status=200 points=3911 inference=7.276s accuracy=0.911020199437484 warnings=1
+INFO:     127.0.0.1:54352 - "POST /predict HTTP/1.1" 200 OK
+2026-11-18 16:50:58,860 INFO pathsnap.api run=9df63772d69d POST /predict trip=00000091 partition=student_test BEGIN
+2026-11-18 16:51:02,364 INFO pathsnap.api run=9df63772d69d POST /predict trip=00000091 status=200 points=874 inference=2.557s accuracy=0.9405034324942791 warnings=0
+INFO:     127.0.0.1:54354 - "POST /predict HTTP/1.1" 200 OK

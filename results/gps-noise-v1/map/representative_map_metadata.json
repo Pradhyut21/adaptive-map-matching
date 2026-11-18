@@ -1,0 +1,10 @@
+{
+  "trip_id": "00000052",
+  "partition": "student_test",
+  "observations": 262,
+  "road_arcs_displayed": 1495,
+  "reference_arcs": 95,
+  "prediction_layer_included": true,
+  "coordinate_system": "+proj=aeqd +lat_0=56.824634 +lon_0=35.884374 +datum=WGS84 +units=m +no_defs +type=crs",
+  "model_version": "gps-noise-v1"
+}

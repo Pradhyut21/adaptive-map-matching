@@ -6,12 +6,15 @@ This repository was implemented with AI assistance. Every team member must revie
 
 ## Executed results
 
-The active matcher combines two fitted Histogram Gradient Boosting variants with a distance prior and a U-turn penalty. Both configurations were chosen on training trips. Each row below uses the same 19,160 student-test observations.
+The active matcher combines two fitted Histogram Gradient Boosting variants with a distance prior, a U-turn penalty, and a decoder that tolerates GPS jitter. Training-trip validation selected a three-sample smoothing half-window and a 15 m same-arc projection tolerance. The frozen run matched **18,016 of 19,160 student-test observations (94.03%)** under full-route labels, with ordered route LCS F1 of **0.9795** and strict continuity of **96.23%**. Its earlier-label Top-1 was **72.83%**. See [training selection and student evidence](results/gps-noise-v1/).
+
+The preceding comparison introduced the full-route labels and the boosting blend. Each row below uses the same 19,160 student-test observations.
 
 | Pipeline | Full-route label Top-1 | Earlier label Top-1 | Ordered-sequence LCS F1 | Directed continuity |
 |---|---:|---:|---:|---:|
 | Previous contextual boosting + decoder | 78.41% | 80.56% | 0.8790 | 98.80% |
-| Active full-route boosting blend + decoder | **86.41%** | 74.97% | **0.8867** | 98.27% |
+| Full-route boosting blend + earlier decoder | 86.41% | 74.97% | 0.8867 | 98.27% |
+| Active blend + GPS-noise decoder | **94.03%** | 72.83% | **0.9795** | 96.23% |
 
 The full-route method derives reference arcs with a global monotone alignment. The two methods assign different labels to 5,011 observations. All 19,160 points, including 25 whose full-route labels are more than 60 m from the GPS fix, stay in both denominators. The API displays both scores. See the [peer review and paired results](docs/peer_approach.md).
 
@@ -33,7 +36,7 @@ The refinement reused Histogram Gradient Boosting with 20 candidates and 28 GPS 
 
 With the two heading reliability features, the selected classifier scored 59.53% mean grouped-CV Top-1 and 71.66% student-test Top-1. Removing them gave 57.19% and 68.25%, respectively. The reference-label alignment also uses heading. Run `python -m scripts.ablation` after tuning to reproduce this comparison.
 
-All 51 behavior and API tests passed with the active artifact. All ten live HTTP predictions over the host's Wi-Fi address exactly reproduced the frozen full-route Top-1, earlier-label Top-1, and sequence LCS F1. Desktop and mobile browser captures had no JavaScript errors or horizontal overflow. Evidence is under `results/route-context-v1/`. The physical two-laptop demonstration and receiving-terminal screenshot are pending.
+All 52 behavior and API tests passed with the updated artifact, including a regression case for slow GPS jitter on a one-way road. The earlier release's HTTP evidence is under `results/route-context-v1/`; current student verification and screenshots are under `results/gps-noise-v1/`. The physical two-laptop demonstration and receiving-terminal screenshot require team evidence.
 
 ## Setup
 
@@ -92,6 +95,15 @@ python -m scripts.validate_route_decoder select
 python -m scripts.validate_route_decoder benchmark
 ```
 
+To reproduce training-only decoder noise selection and freeze the selected settings before student evaluation:
+
+```powershell
+python -m scripts.validate_gps_noise
+python -m scripts.freeze_gps_noise
+```
+
+The selection includes all points from sixteen training trips, split between slow GPS motion and a deterministic sample of other trips. It uses out-of-fold booster scores. The existing classifiers remain fitted on the original 80 training trips. Reserved evaluator files are used by the runtime evaluation service.
+
 ## Run Laptop 1 (backend)
 
 ```powershell
@@ -100,7 +112,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info
 
 Open `http://127.0.0.1:8000` for a same-machine check. The UI and API may run from this one process, but the required final deployment uses a second laptop. `GET /health`, `GET /trips` and `POST /predict` perform real inference. A request body is `{"trip_id":"00000000"}` using an ID actually returned by `/trips`.
 
-`artifacts/active_model.json` selects `artifacts/ordered_route_boost.joblib` and its companion settings, which use `artifacts/context_boost.joblib` for the second set of candidate scores. To reproduce the earlier service, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/context_boost.joblib).Path` before starting Uvicorn. Use `artifacts/final_model.joblib` for the original Extra Trees service.
+`artifacts/active_model.json` selects `artifacts/gps_noise_boost.joblib` and its frozen companion settings, which use `artifacts/context_boost.joblib` for the second set of candidate scores. To reproduce the preceding decoder, set `$env:PATHSNAP_MODEL = (Resolve-Path artifacts/ordered_route_boost.joblib).Path` before starting Uvicorn. Use `artifacts/context_boost.joblib` for the earlier contextual model and `artifacts/final_model.joblib` for the original Extra Trees service.
 
 ## Run Laptop 2 (UI)
 

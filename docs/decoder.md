@@ -4,6 +4,17 @@
 engine and reads no reference routes or labels. All distances are in metres and
 times in seconds. The supplied road graph remains directed.
 
+The current artifact uses short-window GPS smoothing before decoder projection.
+The half-window is three observations, and a same-arc backward projection shift
+up to 15 m can represent a dwell caused by measurement jitter. Larger shifts
+still require a feasible directed path. These settings were selected on
+out-of-fold predictions from sixteen training trips, including slow motion.
+The original strict continuity diagnostic continues to use raw GPS projections.
+It can therefore reject transitions accepted by the decoder's explicit noise
+model. Both this diagnostic and ordered route LCS F1 are retained.
+See [training selection](../results/gps-noise-v1/training_validation.json) and
+[student-trip evaluation](../results/gps-noise-v1/student_test.json).
+
 ## State, scores and recurrence
 
 Each candidate state contains an arc ID and a projected fraction along that arc.

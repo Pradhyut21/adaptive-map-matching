@@ -168,18 +168,25 @@ def representative_map(trip_dir, predictions=None, route_segments=None, output=O
     (output/"representative_map_metadata.json").write_text(json.dumps({"trip_id":Path(trip_dir).name,"partition":"student_test","observations":len(track),"road_arcs_displayed":len(road_ids),"reference_arcs":len(reference),"prediction_layer_included":predictions is not None,"coordinate_system":network.crs.to_string(),"model_version":model_version},indent=2),encoding="utf-8")
 
 
-def active_map(data_root, trip_id, screenshot):
+def active_map(data_root, trip_id, screenshot, result_version=None):
     from pathsnap.refined_inputs import ROUTE_VERSION
-    results = ROOT / "results" / ROUTE_VERSION
+    version = result_version or ROUTE_VERSION
+    results = ROOT / "results" / version
     record = json.loads((results / "student_test.json").read_text(encoding="utf-8"))
     trip = next((p for p in trip_dirs("student_test", data_root) if p.name == trip_id), None)
     if trip is None:
         raise ValueError("The requested trip must be in the permitted student-testing partition")
     output = results / "map"
-    prediction_path = results / "predictions" / record["selected"] / f"{trip_id}.npz"
+    prediction_folder = results / "predictions"
+    if record.get("selected"):
+        prediction_folder = prediction_folder / record["selected"]
+    prediction_path = prediction_folder / f"{trip_id}.npz"
     with np.load(prediction_path, allow_pickle=False) as saved:
-        representative_map(trip, saved["predictions"], [saved["route_arc_ids"].tolist()],
-                           output=output, model_version=ROUTE_VERSION)
+        details = prediction_path.with_suffix(".json")
+        route_segments = (json.loads(details.read_text(encoding="utf-8"))["route_segments"]
+                          if details.is_file() else [saved["route_arc_ids"].tolist()])
+        representative_map(trip, saved["predictions"], route_segments,
+                           output=output, model_version=version)
     if screenshot:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as browsers:
@@ -195,9 +202,11 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument("--data-root",type=Path,default=DATA_ROOT);parser.add_argument("--map-only",action="store_true",help="Refresh representative map with actual saved HMM predictions")
     parser.add_argument("--active-map", metavar="STUDENT_TRIP", help="Export the active model's saved student-trip result")
     parser.add_argument("--screenshot", action="store_true", help="Render the active Folium map in Chromium")
+    parser.add_argument("--result-version", choices=("route-context-v1", "gps-noise-v1"),
+                        help="Select an existing student-test experiment for the Folium export")
     args=parser.parse_args()
     if args.active_map:
-        active_map(args.data_root, args.active_map, args.screenshot)
+        active_map(args.data_root, args.active_map, args.screenshot, args.result_version)
         return
     OUT.mkdir(parents=True,exist_ok=True)
     if args.map_only:

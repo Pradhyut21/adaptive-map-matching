@@ -25,8 +25,8 @@ class RefinementConfig:
     route_assignment_classifier_weight: float = 0.15
 
     def __post_init__(self):
-        if not math.isfinite(self.same_arc_jitter_m) or not 0 <= self.same_arc_jitter_m <= 15:
-            raise ValueError("same_arc_jitter_m must be between 0 and 15 metres")
+        if not math.isfinite(self.same_arc_jitter_m) or not 0 <= self.same_arc_jitter_m <= 60:
+            raise ValueError("same_arc_jitter_m must be between 0 and 60 metres")
         if not isinstance(self.smoothing_half_window, int) or not 0 <= self.smoothing_half_window <= 6:
             raise ValueError("smoothing_half_window must be an integer between 0 and 6")
         if not 0 <= self.smoothing_fraction <= 1:

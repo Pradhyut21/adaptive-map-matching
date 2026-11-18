@@ -1,0 +1,17 @@
+00000002 {'frozen_baseline': 0.594, 'dwell_15': 0.7767, 'dwell_30': 0.7805, 'smooth_3': 0.7871, 'smooth_5': 0.7853, 'single_booster_dwell': 0.8026}
+00000008 {'frozen_baseline': 0.6198, 'dwell_15': 0.816, 'dwell_30': 0.8283, 'smooth_3': 0.8141, 'smooth_5': 0.8099, 'single_booster_dwell': 0.8306}
+00000010 {'frozen_baseline': 0.3932, 'dwell_15': 0.5872, 'dwell_30': 0.8045, 'smooth_3': 0.8056, 'smooth_5': 0.8041, 'single_booster_dwell': 0.8466}
+00000021 {'frozen_baseline': 0.4687, 'dwell_15': 0.8854, 'dwell_30': 0.9633, 'smooth_3': 0.9769, 'smooth_5': 0.9762, 'single_booster_dwell': 0.9686}
+00000033 {'frozen_baseline': 0.1391, 'dwell_15': 0.207, 'dwell_30': 0.1863, 'smooth_3': 0.1875, 'smooth_5': 0.187, 'single_booster_dwell': 0.1651}
+00000043 {'frozen_baseline': 0.8118, 'dwell_15': 0.851, 'dwell_30': 0.851, 'smooth_3': 0.857, 'smooth_5': 0.8562, 'single_booster_dwell': 0.8221}
+00000046 {'frozen_baseline': 0.6531, 'dwell_15': 0.9543, 'dwell_30': 0.9586, 'smooth_3': 0.9622, 'smooth_5': 0.9622, 'single_booster_dwell': 0.9522}
+00000054 {'frozen_baseline': 0.1059, 'dwell_15': 0.0965, 'dwell_30': 0.0931, 'smooth_3': 0.0909, 'smooth_5': 0.0905, 'single_booster_dwell': 0.087}
+00000061 {'frozen_baseline': 0.586, 'dwell_15': 0.7343, 'dwell_30': 0.758, 'smooth_3': 0.7755, 'smooth_5': 0.7713, 'single_booster_dwell': 0.7252}
+00000062 {'frozen_baseline': 0.865, 'dwell_15': 0.9781, 'dwell_30': 0.9813, 'smooth_3': 0.9757, 'smooth_5': 0.9739, 'single_booster_dwell': 0.9819}
+00000066 {'frozen_baseline': 0.8714, 'dwell_15': 0.8895, 'dwell_30': 0.8867, 'smooth_3': 0.889, 'smooth_5': 0.8795, 'single_booster_dwell': 0.8865}
+00000080 {'frozen_baseline': 0.6721, 'dwell_15': 0.9622, 'dwell_30': 0.9689, 'smooth_3': 0.9637, 'smooth_5': 0.9661, 'single_booster_dwell': 0.9705}
+00000082 {'frozen_baseline': 0.276, 'dwell_15': 0.7971, 'dwell_30': 0.8761, 'smooth_3': 0.8814, 'smooth_5': 0.8814, 'single_booster_dwell': 0.8754}
+00000086 {'frozen_baseline': 0.938, 'dwell_15': 0.9952, 'dwell_30': 0.9952, 'smooth_3': 0.992, 'smooth_5': 0.9913, 'single_booster_dwell': 0.9937}
+00000093 {'frozen_baseline': 0.744, 'dwell_15': 0.8621, 'dwell_30': 0.8621, 'smooth_3': 0.8588, 'smooth_5': 0.8538, 'single_booster_dwell': 0.858}
+00000098 {'frozen_baseline': 0.9816, 'dwell_15': 0.985, 'dwell_30': 0.986, 'smooth_3': 0.9844, 'smooth_5': 0.9839, 'single_booster_dwell': 0.986}
+Training-selected smooth_3 0.6751262432147968
